@@ -28,7 +28,9 @@ class Controller extends BaseController
                     'e.Categoria', 'e.TiempoExperiencia', 
                     'c.Nombre as CategoriaNombre', 
                     'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
-                    'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo'
+                    'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
+                    'e.CodigoEmpleo'
+
                 )
                 ->get();
     
@@ -63,6 +65,50 @@ class Controller extends BaseController
             'error' => true,
             'message' => 'Categorías obtenidas con éxito.',
             'values' => $categorias
+        ];
+    }
+    catch (\Throwable $ex) {
+        // Manejo de excepciones
+        $oPaquete = [
+            'error' => false,
+            'message' => $ex->getMessage(),
+            'values' => null
+        ];
+    }
+
+    // Retornar la respuesta en formato JSON
+    return response()->json($oPaquete);
+}
+
+
+public function getDetalleEmpleo(Request $request)
+{
+
+    $tcCodigoEmpleo = $request->input('tcCodigoEmpleo');
+    try {
+        // Realizar la consulta con las relaciones
+        $empleos = DB::table('empleos as e')
+            ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+            ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
+            ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+            ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
+            ->select(
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
+                'e.Categoria', 'e.TiempoExperiencia', 
+                'c.Nombre as CategoriaNombre', 
+                'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
+                'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo'
+            )
+            ->where("e.CodigoEmpleo", $tcCodigoEmpleo)
+
+            ->get();
+
+        // Armar la respuesta
+        $oPaquete = [
+            'error' => true,
+            'message' => 'Empleos obtenidos con éxito.',
+            'values' => $empleos
         ];
     }
     catch (\Throwable $ex) {
