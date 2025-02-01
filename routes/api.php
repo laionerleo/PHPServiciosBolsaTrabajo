@@ -22,5 +22,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('servicio/listarempleos', [Controller::class, "getlistaempleos"]);
 Route::post('servicio/listarempresas', [Controller::class, "getlistarempresas"]);
 Route::get('servicio/listarcategorias', [Controller::class, "getListaCategorias"]);
-Route::get('servicio/getDatosEmpleo', [Controller::class, "getDetalleEmpleo"]);
+Route::post('servicio/getDatosEmpleo', [Controller::class, "getDetalleEmpleo"]);
 
