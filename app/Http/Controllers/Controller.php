@@ -151,7 +151,7 @@ class Controller extends BaseController
     public function getDetalleEmpresa(Request $request)
     {
 
-        $tnEmpresa = $request->input('tnEmpresa');
+        $tcCodigoEmpresa = $request->input('tcCodigoEmpresa');
         try {
             // Realizar la consulta con las relaciones
             $loEmpresa = DB::table('Empresa as e')
@@ -169,7 +169,7 @@ class Controller extends BaseController
                                 'tme.descripcion as TamañoEmpresaDescripcion',
                                 'e.AñoFundacion'
                             )
-                            ->where('e.id', '=', $empresaId)
+                            ->where('e.CodigoEmpresa', '=', $empresaId)
                             ->first(); // Usamos 'first' porque estamos esperando un solo resultado
 
 
@@ -207,7 +207,7 @@ class Controller extends BaseController
     public function getDetalleCandidato(Request $request)
     {
 
-        $tnCandidato = $request->input('tnCandidato');
+        $tcCodigoCandidato = $request->input('tcCodigoCandidato');
         try {
             // Realizar la consulta con las relaciones
             $empleos = DB::table('empleo as e')
@@ -223,7 +223,7 @@ class Controller extends BaseController
                     'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                     'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo'
                 )
-                ->where("e.CodigoEmpleo", $tcCodigoEmpleo)
+                ->where("e.tcCodigoCandidato", $tcCodigoCandidato)
 
                 ->get();
 
