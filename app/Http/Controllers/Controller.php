@@ -210,7 +210,7 @@ class Controller extends BaseController
         $tcCodigoCandidato = $request->input('tcCodigoCandidato');
         try {
             // Realizar la consulta con las relaciones
-            $empleos = DB::table('empleo as e')
+            $empleos = DB::table('Candidad as e')
                 ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
                 ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
                 ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
