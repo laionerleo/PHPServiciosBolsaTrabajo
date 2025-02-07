@@ -31,4 +31,4 @@ Route::post('servicio/getDatosEmpleo', [Controller::class, "getDetalleEmpleo"]);
 Route::post('login', [ServiciosControler::class, 'login']);
 
 // Ruta para obtener las empresas (protegida por JWT)
-Route::middleware('jwt.auth')->get('companies', [ServiciosControler::class, 'getCompanies']);
+Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);

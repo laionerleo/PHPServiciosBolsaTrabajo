@@ -44,15 +44,21 @@ class ServiciosControler extends Controller
     {
         try {
             // Validar el token
-            $user = JWTAuth::parseToken()->authenticate();
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+
+
+            /*
+            echo '<pre>'; 
+            print_r($user ) ;
+            echo '</pre>';*/
 
             // Si el token es válido, traer las empresas
-            $companies = Company::all(); // Aquí puedes agregar cualquier consulta que necesites
+            //$companies = Company::all(); // Aquí puedes agregar cualquier consulta que necesites
 
             return response()->json([
                 'message' => 'Token is valid.',
                 'error' => false,
-                'companies' => $companies
+                'Usuario' => $loUsuario
             ]);
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
