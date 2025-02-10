@@ -46,14 +46,28 @@ class ServiciosControler extends Controller
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
 
+            return response()->json([
+                'message' => 'Token is valid.',
+                'error' => false,
+                'Usuario' => $loUsuario
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'No valid token found.',
+                'error' => true
+            ], 401);
+        }
+    }
 
-            /*
-            echo '<pre>'; 
-            print_r($user ) ;
-            echo '</pre>';*/
 
-            // Si el token es válido, traer las empresas
-            //$companies = Company::all(); // Aquí puedes agregar cualquier consulta que necesites
+    //------------
+    // Método para validar token y traer los datos
+    public function registrousuario(Request $request)
+    {
+        try {
+            // Validar el token
+            $loUsuario = JWTAuth::parseToken()->authenticate();
 
             return response()->json([
                 'message' => 'Token is valid.',
@@ -68,5 +82,78 @@ class ServiciosControler extends Controller
             ], 401);
         }
     }
+
+
+    // Método para validar token y traer los datos
+    public function aplicaratrabajo(Request $request)
+    {
+        try {
+            // Validar el token
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+
+            return response()->json([
+                'message' => 'Token is valid.',
+                'error' => false,
+                'Usuario' => $loUsuario
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'No valid token found.',
+                'error' => true
+            ], 401);
+        }
+    }
+
+
+
+
+
+                      // Método para validar token y traer los datos
+    public function listarempleosbyempresa(Request $request)
+    {
+        try {
+            // Validar el token
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+
+            return response()->json([
+                'message' => 'Token is valid.',
+                'error' => false,
+                'Usuario' => $loUsuario
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'No valid token found.',
+                'error' => true
+            ], 401);
+        }
+    }
+
+
+
+    public function listarempleosbycandidato(Request $request)
+    {
+        try {
+            // Validar el token
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+
+            return response()->json([
+                'message' => 'Token is valid.',
+                'error' => false,
+                'Usuario' => $loUsuario
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'No valid token found.',
+                'error' => true
+            ], 401);
+        }
+    }
+
+    
+
+
 
 }

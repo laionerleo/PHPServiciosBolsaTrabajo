@@ -34,17 +34,18 @@ Route::post('login', [ServiciosControler::class, 'login']);
 Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
 
 // registro del usuario  ya sea candidato o empresa
-Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+Route::middleware('jwt.auth')->post('registrousuario', [ServiciosControler::class, 'getDatosUsuario']);
 
 
 // aplicar a trabajo 
-Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+Route::middleware('jwt.auth')->post('aplicaratrabajo', [ServiciosControler::class, 'getDatosUsuario']);
 
 //listar  empleos by empresa
-Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+Route::middleware('jwt.auth')->post('listarempleosbyempresa', [ServiciosControler::class, 'getDatosUsuario']);
 
 //listar empleos a los que etsoy postulando 
-Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+Route::middleware('jwt.auth')->post('listarempleosbycandidatos', [ServiciosControler::class, 'getDatosUsuario']);
 
+//listar candidatos bya emplos  empleos a los que etsoy postulando 
+Route::middleware('jwt.auth')->post('listarcandidatosbyempleos', [ServiciosControler::class, 'getDatosUsuario']);
 
-Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
