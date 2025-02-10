@@ -32,3 +32,19 @@ Route::post('login', [ServiciosControler::class, 'login']);
 
 // Ruta para obtener las empresas (protegida por JWT)
 Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+
+// registro del usuario  ya sea candidato o empresa
+Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+
+
+// aplicar a trabajo 
+Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+
+//listar  empleos by empresa
+Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+
+//listar empleos a los que etsoy postulando 
+Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
+
+
+Route::middleware('jwt.auth')->post('getdatosusuario', [ServiciosControler::class, 'getDatosUsuario']);
