@@ -25,6 +25,8 @@ Route::get('servicio/listarempleos', [Controller::class, "getlistaempleos"]);
 Route::post('servicio/listarempresas', [Controller::class, "getlistarempresas"]);
 Route::get('servicio/listarcategorias', [Controller::class, "getListaCategorias"]);
 Route::post('servicio/getDatosEmpleo', [Controller::class, "getDetalleEmpleo"]);
+Route::post('servicio/getDatosEmpresa', [Controller::class, "getDetalleEmpresa"]);
+Route::post('servicio/getDatosCandidato', [Controller::class, "getDetalleCandidato"]);
 
 
 // Ruta para el login

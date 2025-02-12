@@ -169,7 +169,7 @@ class Controller extends BaseController
                                 'tme.descripcion as TamañoEmpresaDescripcion',
                                 'e.AñoFundacion'
                             )
-                            ->where('e.CodigoEmpresa', '=', $empresaId)
+                            ->where('e.EmpresaCodigo', '=', $empresaId)
                             ->first(); // Usamos 'first' porque estamos esperando un solo resultado
 
 
@@ -210,23 +210,24 @@ class Controller extends BaseController
         $tcCodigoCandidato = $request->input('tcCodigoCandidato');
         try {
             // Realizar la consulta con las relaciones
-            $empleos = DB::table('Candidad as e')
-                ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
-                ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
-                ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
-                ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
-                ->select(
+            $loCandidato = DB::table('candidato as e')
+                //->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+                //->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
+                //->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+                //->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
+            /*    ->select(
                     'e.Empleo', 'e.Titulo',   'e.DescripcionLarga', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
                     'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
                     'e.Categoria', 'e.TiempoExperiencia', 
                     'c.Nombre as CategoriaNombre', 
                     'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                     'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo'
-                )
-                ->where("e.tcCodigoCandidato", $tcCodigoCandidato)
+                )*/
+                ->where("e.CandidatoCodigo", $tcCodigoCandidato)
 
                 ->get();
 
+                /*
                 // traer requerimiento 
                 $empleosrequerimiento = DB::table('empleo as e')
                 ->leftJoin('empleorequerimiento as er', 'e.Empleo', '=', 'er.Empleo')
@@ -244,17 +245,20 @@ class Controller extends BaseController
                 )
                 ->where("e.CodigoEmpleo", $tcCodigoEmpleo)
                 ->get();
+                */
 
+                /*
             $laDatosEmpleo=[
                 "loEmpleo"=> $empleos[0],
                 "laEmpleoRequerimiento"=>$empleosrequerimiento ,
                 "laEmpleoResponsabilidades"=> $empleoresponsabilidades,
             ] ;
+            */
             // Armar la respuesta
             $oPaquete = [
                 'error' => true,
                 'message' => 'Empleos obtenidos con éxito.',
-                'values' => $laDatosEmpleo
+                'values' => @$loCandidato[0]
             ];
         }
         catch (\Throwable $ex) {
