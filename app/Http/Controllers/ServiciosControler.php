@@ -45,16 +45,35 @@ class ServiciosControler extends Controller
         try {
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
+            $lnUsuario =$loUsuario->Usuario;
+
+            //traer datoc ocom dcadidato
+            $loCandidato = DB::select("SELECT * 
+                                        FROM candidato
+                                        WHERE Usuario=$lnUsuario");
+
+            //traer datos de empresa si en caso tiene 
+
+            $loEmpresa = DB::select("SELECT * 
+                                        FROM usuarioempresa ue, empresa e
+                                        WHERE ue.Empresa=e.Empresa
+                                        and ue.Usuario =$lnUsuario ");
+
+
 
             return response()->json([
-                'message' => 'Token is valid.',
+                'message' => 'Datos obtenidos.',
                 'error' => false,
-                'Usuario' => $loUsuario
+                'Datos' => [
+                            "Usuario"=>$loUsuario,
+                            "Candidato"=>$loCandidato[0],
+                            "Empresa"=>@$loEmpresa[0]
+                            ]
             ]);
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
-                'message' => 'No valid token found.',
+                'message' => 'No valid token found.'."ERROR". $e->getMessage(),
                 'error' => true
             ], 401);
         }
@@ -115,6 +134,32 @@ class ServiciosControler extends Controller
         try {
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
+            $lnUsuario =$loUsuario->Usuario;
+            $loEmpresa = DB::select("SELECT * 
+                                    FROM usuarioempresa ue, empresa e
+                                    WHERE ue.Empresa=e.Empresa
+                                    and ue.Usuario =$lnUsuario ");
+            $lnEmpresa=$loEmpresa[0]->Empresa;
+
+            $empleos = DB::table('empleo as e')
+            ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+            ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
+            ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+            ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
+            ->select(
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
+                'e.Categoria', 'e.TiempoExperiencia', 
+                'c.Nombre as CategoriaNombre', 
+                'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
+                'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
+                'e.CodigoEmpleo'
+
+            )
+            ->where('e.Empresa', '=', $lnEmpresa) // Añadir condición WHERE
+            ->get();
+            
+
 
             return response()->json([
                 'message' => 'Token is valid.',
