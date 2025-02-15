@@ -155,21 +155,15 @@ class Controller extends BaseController
         try {
             // Realizar la consulta con las relaciones
             $loEmpresa = DB::table('Empresa as e')
-                            ->join('TipoEmpresa as te', 'e.TipoEmpresa', '=', 'te.id')
-                            ->join('TamañoEmpresa as tme', 'e.TamañoEmpresa', '=', 'tme.id')
+                            ->join('TipoEmpresa as te', 'e.TipoEmpresa', '=', 'te.TipoEmpresa')
+                            ->join('TamañoEmpresa as tme', 'e.TamañoEmpresa', '=', 'tme.TamañoEmpresa')
                             ->select(
-                                'e.Nombre',
-                                'e.NombreComercial',
-                                'e.Direccion',
-                                'e.Descripcion',
-                                'e.UrlImagen',
-                                'e.UrlIcono',
-                                'e.Estado',
+                                'e.*',
                                 'te.descripcion as TipoEmpresaDescripcion',
-                                'tme.descripcion as TamañoEmpresaDescripcion',
-                                'e.AñoFundacion'
+                                'tme.descripcion as TamanoEmpresaDescripcion',
+                                'e.AñoFundacion as AnioFundacion'
                             )
-                            ->where('e.EmpresaCodigo', '=', $empresaId)
+                            ->where('e.EmpresaCodigo', '=', $tcCodigoEmpresa)
                             ->first(); // Usamos 'first' porque estamos esperando un solo resultado
 
 
@@ -178,7 +172,7 @@ class Controller extends BaseController
             
 
             $laDatosEmpresa=[
-                "loEmpresa"=> $loEmpresa,
+                "loEmpresa"=> @$loEmpresa,
                // "laEmpleoRequerimiento"=>$empleosrequerimiento ,
                 //"laEmpleoResponsabilidades"=> $empleoresponsabilidades,
             ] ;
@@ -186,7 +180,7 @@ class Controller extends BaseController
             $oPaquete = [
                 'error' => true,
                 'message' => 'Empresa  obtenidos con éxito.',
-                'values' => $laDatosEmpleo
+                'values' => $laDatosEmpresa
             ];
         }
         catch (\Throwable $ex) {
