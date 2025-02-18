@@ -199,6 +199,216 @@ class ServiciosControler extends Controller
 
     
 
+    public function crearcandidato(Request $request){
+        // Recuperar los datos del request
+        $tcCorreo = $request->input('tcCorreo');
+        $tcContraseña = $request->input('tcContraseña');
+        $tnTelefono = $request->input('tnTelefono');
+        $tcNombre = $request->input('tcNombre');
+        $tcApellidos = $request->input('tcApellidos');
+        $tcProfesion = $request->input('tcProfesion');
+    
+        // Verificar si el correo ya existe
+        $existeUsuario = DB::table('usuario')->where('Correo', $tcCorreo)->exists();
+        if ($existeUsuario) {
+            // Devolver el paquete de error directamente
+            return response()->json([
+                'error' => true,
+                'message' => 'El correo electrónico ya está registrado.',
+                'values' => null
+            ]);
+        }
+    
+        try {
+            // Iniciar una transacción
+            DB::beginTransaction();
+    
+            // Insertar en la tabla usuario
+            $usuarioId = DB::table('usuario')->insertGetId([
+                'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
+                'Correo' => $tcCorreo,
+                'Telefono' => $tnTelefono,
+                'Contraseña' => bcrypt($tcContraseña), // Encriptar la contraseña
+                'Estado' => 1,
+                'FechaCreacion' => now(),
+            ]);
+    
+            // Insertar en la tabla candidato
+            DB::table('candidato')->insert([
+                'Nombre' => $tcNombre . ' ' . $tcApellidos,
+                'Profesion' => $tcProfesion,
+                'Estado' => 1,
+                'Usuario' => $usuarioId,
+                'CandidatoCodigo' => uniqid(), // Generar un código único para el candidato
+                'FechaNacimiento' => null,
+                'Acercade' => null,
+                'Pais' => null,
+                'Ciudad' => null,
+                'Sexo' => null,
+                'TituloTecnico' => null,
+                'TituloLicenciatura' => null,
+                'TituloDiplomado' => null,
+                'TituloMaestria' => null,
+                'TituloDoctorado' => null,
+                'AnosExperiencia' => null,
+                'Telefono' => $tnTelefono,
+            ]);
+    
+            // Confirmar la transacción (commit)
+            DB::commit();
+    
+            // Armar la respuesta
+            $oPaquete = [
+                'error' => false,
+                'message' => 'Candidato creado con éxito.',
+                'values' => [
+                    'usuarioId' => $usuarioId,
+                ]
+            ];
+        }
+        catch (\Throwable $ex) {
+            // Revertir la transacción (rollback) en caso de error
+            DB::rollBack();
+    
+            // Armar la respuesta de error
+            $oPaquete = [
+                'error' => true,
+                'message' => $ex->getMessage(),
+                'values' => null
+            ];
+        }
+    
+        // Retornar la respuesta en formato JSON
+        return response()->json($oPaquete);
+    }
+
+
+    public function crearcandidatoempresa(Request $request){
+        // Recuperar los datos del request
+        $tcCorreo = $request->input('tcCorreo');
+        $tcContraseña = $request->input('tcContraseña');
+        $tnTelefono = $request->input('tnTelefono');
+        $tcNombre = $request->input('tcNombre');
+        $tcApellidos = $request->input('tcApellidos');
+        $tcProfesion = $request->input('tcProfesion');
+
+        $tcNombreEmpresa = $request->input('tcNombreEmpresa');
+        $tcDescripcion = $request->input('tcDescripcion');
+        $tnAnoFundacion = $request->input('tnAnoFundacion');
+    
+        // Verificar si el correo ya existe
+        $existeUsuario = DB::table('usuario')->where('Correo', $tcCorreo)->exists();
+        if ($existeUsuario) {
+            // Devolver el paquete de error directamente
+            return response()->json([
+                'error' => true,
+                'message' => 'El correo electrónico ya está registrado.',
+                'values' => null
+            ]);
+        }
+    
+        try {
+            // Iniciar una transacción
+            DB::beginTransaction();
+    
+            // Insertar en la tabla usuario
+            $usuarioId = DB::table('usuario')->insertGetId([
+                'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
+                'Correo' => $tcCorreo,
+                'Telefono' => $tnTelefono,
+                'Contraseña' => bcrypt($tcContraseña), // Encriptar la contraseña
+                'Estado' => 1,
+                'FechaCreacion' => now(),
+            ]);
+    
+            // Insertar en la tabla candidato
+            DB::table('candidato')->insert([
+                'Nombre' => $tcNombre . ' ' . $tcApellidos,
+                'Profesion' => $tcProfesion,
+                'Estado' => 1,
+                'Usuario' => $usuarioId,
+                'CandidatoCodigo' => uniqid(), // Generar un código único para el candidato
+                'FechaNacimiento' => null,
+                'Acercade' => null,
+                'Pais' => null,
+                'Ciudad' => null,
+                'Sexo' => null,
+                'TituloTecnico' => null,
+                'TituloLicenciatura' => null,
+                'TituloDiplomado' => null,
+                'TituloMaestria' => null,
+                'TituloDoctorado' => null,
+                'AnosExperiencia' => null,
+                'Telefono' => $tnTelefono,
+            ]);
+    
+
+                 // Insertar en la tabla empresa
+                $empresaId = DB::table('empresa')->insertGetId([
+                    'Nombre' => $tcNombreEmpresa,
+                    'NombreComercial' => $tcNombreEmpresa, // Puedes usar el mismo nombre si no hay nombre comercial
+                    'Direccion' => null, // Opcional
+                    'Descripcion' => $tcDescripcion,
+                    'UrlImagen' => null, // Opcional
+                    'UrlIcono' => null, // Opcional
+                    'Estado' => 1, // Estado activo
+                    'TipoEmpresa' => null, // Opcional
+                    'TamañoEmpresa' => null, // Opcional
+                    'AñoFundacion' => $tnAnoFundacion,
+                    'EmpresaCodigo' => uniqid(), // Generar un código único para la empresa
+                    'Acercade' => null, // Opcional
+                    'Telefono' => $tnTelefono,
+                    'Correo' => $tcCorreo, // Correo del usuario
+                    'Pais' => null, // Opcional
+                    'Ciudad' => null, // Opcional
+                   // 'Usuario' => $usuarioId, // Asociar la empresa al usuario creado
+                ]);
+
+                $ultimoSerial = DB::table('usuarioempresa')
+                ->where('Usuario', $usuarioId)
+                ->max('Serial');
+
+            // Calcular el nuevo Serial
+            $nuevoSerial = $ultimoSerial ? $ultimoSerial + 1 : 1;
+
+            // Insertar en la tabla usuarioempresa
+            DB::table('usuarioempresa')->insert([
+                'Usuario' => $usuarioId,
+                'Serial' => $nuevoSerial,
+                'Empresa' => $empresaId,
+                'Estado' => 1, // Estado activo
+            ]);
+
+
+            // Confirmar la transacción (commit)
+            DB::commit();
+    
+            // Armar la respuesta
+            $oPaquete = [
+                'error' => false,
+                'message' => 'Empresa creada con éxito.',
+                'values' => [
+                    'usuarioId' => $empresaId,
+                ]
+            ];
+        }
+        catch (\Throwable $ex) {
+            // Revertir la transacción (rollback) en caso de error
+            DB::rollBack();
+    
+            // Armar la respuesta de error
+            $oPaquete = [
+                'error' => true,
+                'message' => $ex->getMessage(),
+                'values' => null
+            ];
+        }
+    
+        // Retornar la respuesta en formato JSON
+        return response()->json($oPaquete);
+    }
+
+
 
 
 }
