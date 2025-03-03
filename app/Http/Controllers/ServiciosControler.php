@@ -109,12 +109,46 @@ class ServiciosControler extends Controller
         try {
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
+            $lnUsuario =$loUsuario->Usuario;
+            $loCandidato = DB::table('candidato')
+                            ->where('Usuario', '=', $lnUsuario)
+                            ->first();
+            $lnCandidato=$loCandidato->Candidato;
 
-            return response()->json([
-                'message' => 'Token is valid.',
-                'error' => false,
-                'Usuario' => $loUsuario
+            $tcCodigoEmpresa = $request->input('tcCodigoEmpresa');
+            $loEmpleo = DB::table('Empleo')
+                            ->where('e.CodigoEmpleo', '=', $tcCodigoEmpleo)
+                            ->first();
+            $lnEmpleo=$loEmpleo->Empleo;
+              // Insertar en la tabla usuario
+
+
+              $ultimoSerial = DB::table('candidatoempleo')
+                                ->where('Candidato',  $lnCandidato)
+                                ->max('Serial');
+
+
+            $insercionExitosa = DB::table('candidatoempleo')->insert([ 
+                'Candidato' => $lnCandidato,
+                'Serial' => $ultimoSerial,
+                'Empleo' => $lnEmpleo,
+                'Estado' => 1,
+                'FechaPostulacion' => now(),
             ]);
+            
+            if ($insercionExitosa) {
+                return response()->json([
+                    'message' => 'Inserción correcta',
+                    'error' => false,
+                    'Datos' => 1,
+                ]);
+            } else {
+                return response()->json([
+                    'message' => 'Error en la inserción',
+                    'error' => true,
+                    'Datos' => 0,
+                ]);
+            }
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
@@ -135,12 +169,7 @@ class ServiciosControler extends Controller
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
             $lnUsuario =$loUsuario->Usuario;
-            $loEmpresa = DB::select("SELECT * 
-                                    FROM usuarioempresa ue, empresa e
-                                    WHERE ue.Empresa=e.Empresa
-                                    and ue.Usuario =$lnUsuario ");
-            $lnEmpresa=$loEmpresa[0]->Empresa;
-
+            
             $empleos = DB::table('empleo as e')
             ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
             ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
@@ -154,22 +183,31 @@ class ServiciosControler extends Controller
                 'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                 'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                 'e.CodigoEmpleo'
-
             )
-            ->where('e.Empresa', '=', $lnEmpresa) // Añadir condición WHERE
+            ->whereIn('e.Empleo', function($query) use ($lnUsuario) {
+                $query->select('EE.Empleo')
+                      ->from('empresaempleo as EE')
+                      ->whereIn('EE.Empresa', function($query) use ($lnUsuario) {
+                          $query->select('UE.Empresa')
+                                ->from('usuarioempresa as UE')
+                                ->where('UE.Usuario', '=', $lnUsuario);
+                      });
+            })
             ->get();
+        
+        
             
 
 
             return response()->json([
-                'message' => 'Token is valid.',
+                'message' => 'empleos de la empresa ',
                 'error' => false,
-                'Usuario' => $loUsuario
+                'Datos' => $empleos
             ]);
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
-                'message' => 'No valid token found.',
+                'message' => $e->getMessage() ,
                 'error' => true
             ], 401);
         }
@@ -182,11 +220,33 @@ class ServiciosControler extends Controller
         try {
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
+            $lnUsuario =$loUsuario->Usuario;
+        
+            $empleos = DB::table('empleo as e')
+            ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+            ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
+            ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+            ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
+            ->leftJoin('candidatoempleo as ce', 'e.Empleo', '=', 'ce.Empleo') // Unir con candidatoempleo
+            ->leftJoin('candidato as cand', 'ce.Candidato', '=', 'cand.Candidato') // Unir con candidato
+            ->select(
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
+                'e.Categoria', 'e.TiempoExperiencia', 
+                'c.Nombre as CategoriaNombre', 
+                'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
+                'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
+                'e.CodigoEmpleo',
+                'ce.FechaPostulacion', 'ce.Estado' // Información de la postulación
+            )
+            ->where('cand.Usuario', '=', $lnUsuario) // Filtrar por el Usuario asociado al candidato
+            ->get();
+        
 
             return response()->json([
-                'message' => 'Token is valid.',
+                'message' => 'empleos de la empresa ',
                 'error' => false,
-                'Usuario' => $loUsuario
+                'Datos' => $empleos
             ]);
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error

@@ -29,6 +29,8 @@ Route::post('servicio/getDatosEmpresa', [Controller::class, "getDetalleEmpresa"]
 Route::post('servicio/getDatosCandidato', [Controller::class, "getDetalleCandidato"]);
 Route::post('servicio/crearcandidato', [ServiciosControler::class, "crearcandidato"]);
 Route::post('servicio/crearcandidatoempresa', [ServiciosControler::class, "crearcandidatoempresa"]);
+Route::post('servicio/listarempleosbyempresa', [ServiciosControler::class, "listarempleosbyempresa"]);
+Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "listarempleosbycandidato"]);
 
 
 
