@@ -14,34 +14,85 @@ class ServiciosControler extends Controller
     //
        // Método para login
        // Método para login (sin usar modelos)
+
+
     public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+{
+    $credentials = $request->only('email', 'password');
+
+    try {
+        // Validar si el correo existe en la base de datos
         $loUsuario = usuario::where('Correo', $credentials['email'])->first();
 
-        
-        // Hacemos una consulta directa a la tabla `companies`
-        //$loUsuario = DB::table('usuario')->where('Correo', $credentials['email'])->first();
-
-        // Verificar si se encontró la empresa y la contraseña es correcta
-        if (!$loUsuario || !Hash::check($credentials['password'], $loUsuario->Contraseña)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if (!$loUsuario) {
+            // Devolver error si el correo no existe
+            return response()->json([
+                'message' => 'Error : Correo no encontrado.',
+                'error' => true,
+                "codigoerror" => 3,
+            ]);
         }
 
-        // Generar el token JWT para la empresa (sin usar modelo)
+        // Validar si la contraseña es correcta
+        if (!Hash::check($credentials['password'], $loUsuario->Contraseña)) {
+            // Devolver error si la contraseña no coincide
+            return response()->json([
+                'message' => 'Error  Contraseña incorrecta.',
+                'error' => true,
+                "codigoerror" => 3,
+            ]);
+        }
+
+        // Generar el token JWT para el usuario
         $token = JWTAuth::fromUser($loUsuario);
 
         if (!$token) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json([
+                'message' => 'Error al generar el token.',
+                'error' => true,
+                "codigoerror" => 3,
+            ]);
         }
 
-        return response()->json(compact('token'));
+        // Si todo es correcto, devolver el token generado
+        return response()->json([
+            "codigoerror"=>0,
+            'message' => 'Datos obtenidos.',
+            'error' => false,
+            'datos' => [
+                        "token"=>$token
+                        ]
+        ]);
+        ///return response()->json(compact('token'));
+
+    } catch (\Exception $th) {
+        return response()->json([
+            'message' => 'No valid token found. ERROR: ' . $th->getMessage(),
+            'error' => true,
+            "codigoerror" => 1,
+        ]);
     }
+}
+
+
 
 
           // Método para validar token y traer los datos
     public function getDatosUsuario(Request $request)
     {
+
+        try {
+            //code...
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json([
+                'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                'error' => true,
+                "codigoerror"=>1,
+            ]);
+        }
+
         try {
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
@@ -62,6 +113,7 @@ class ServiciosControler extends Controller
 
 
             return response()->json([
+                "codigoerror"=>0,
                 'message' => 'Datos obtenidos.',
                 'error' => false,
                 'Datos' => [
@@ -74,8 +126,9 @@ class ServiciosControler extends Controller
             // Si no se puede autenticar el token, devolver error
             return response()->json([
                 'message' => 'No valid token found.'."ERROR". $e->getMessage(),
-                'error' => true
-            ], 401);
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
         }
     }
 
@@ -84,9 +137,21 @@ class ServiciosControler extends Controller
     // Método para validar token y traer los datos
     public function registrousuario(Request $request)
     {
+
+        try {
+            //code...
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json([
+                'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                'error' => true,
+                "codigoerror"=>1,
+            ]);
+        }
         try {
             // Validar el token
-            $loUsuario = JWTAuth::parseToken()->authenticate();
+           // $loUsuario = JWTAuth::parseToken()->authenticate();
 
             return response()->json([
                 'message' => 'Token is valid.',
@@ -97,8 +162,9 @@ class ServiciosControler extends Controller
             // Si no se puede autenticar el token, devolver error
             return response()->json([
                 'message' => 'No valid token found.',
-                'error' => true
-            ], 401);
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
         }
     }
 
@@ -106,6 +172,18 @@ class ServiciosControler extends Controller
     // Método para validar token y traer los datos
     public function aplicaratrabajo(Request $request)
     {
+        try {
+            //code...
+            $loUsuario = JWTAuth::parseToken()->authenticate();
+        } catch (\Throwable $th) {
+            //throw $th;
+            return response()->json([
+                'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                'error' => true,
+                "codigoerror"=>1,
+            ]);
+        }
+        
         try {
             // Validar el token
             $loUsuario = JWTAuth::parseToken()->authenticate();
@@ -152,9 +230,10 @@ class ServiciosControler extends Controller
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
-                'message' => 'No valid token found.',
-                'error' => true
-            ], 401);
+                'message' => 'Error catch'. $e->getMessage(),
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
         }
     }
 
@@ -167,7 +246,18 @@ class ServiciosControler extends Controller
     {
         try {
             // Validar el token
-            $loUsuario = JWTAuth::parseToken()->authenticate();
+            
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            } 
             $lnUsuario =$loUsuario->Usuario;
             
             $empleos = DB::table('empleo as e')
@@ -207,9 +297,10 @@ class ServiciosControler extends Controller
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
-                'message' => $e->getMessage() ,
-                'error' => true
-            ], 401);
+                'message' => 'Error catch'. $e->getMessage(),
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
         }
     }
 
@@ -219,7 +310,17 @@ class ServiciosControler extends Controller
     {
         try {
             // Validar el token
-            $loUsuario = JWTAuth::parseToken()->authenticate();
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            }
             $lnUsuario =$loUsuario->Usuario;
         
             $empleos = DB::table('empleo as e')
@@ -251,9 +352,10 @@ class ServiciosControler extends Controller
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
-                'message' => 'No valid token found.',
-                'error' => true
-            ], 401);
+                'message' => 'Error catch'. $e->getMessage(),
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
         }
     }
 
@@ -334,8 +436,10 @@ class ServiciosControler extends Controller
             $oPaquete = [
                 'error' => true,
                 'message' => $ex->getMessage(),
-                'values' => null
+                'values' => null,
+                "codigoerror"=>2
             ];
+           
         }
     
         // Retornar la respuesta en formato JSON
@@ -460,13 +564,193 @@ class ServiciosControler extends Controller
             $oPaquete = [
                 'error' => true,
                 'message' => $ex->getMessage(),
-                'values' => null
+                'values' => null,
+                "codigoerror"=>2
             ];
         }
     
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
+
+
+    
+    public function crearempleosempresa(Request $request){
+        /*
+        datos a enviar  
+{tcTitulo: '', tcDescripcion: '', tcDescripcionLarga: '', tcFechaVencimiento: '', tnSalario: 0, …}
+taHabilidades
+: 
+[]
+taIdiomas
+: 
+[]
+taRequerimientos
+: 
+[]
+taResponsabilidades
+: 
+[]
+tcDescripcion
+: 
+""
+tcDescripcionLarga
+: 
+""
+tcDireccion
+: 
+""
+tcFechaVencimiento
+: 
+""
+tcTitulo
+: 
+""
+tnCategoria
+: 
+0
+tnSalario
+: 
+0
+tnTiempoExperiencia
+: 
+""
+tnTipoEmpleo
+: 
+0
+[[Prototype]]
+: 
+Object
+        
+        */
+        
+        
+        // Recuperar los datos del request
+        $tcTitulo = $request->input('tcTitulo');
+        $tcDescripcion = $request->input('tcDescripcion');
+        $tcDescripcionLarga = $request->input('tcDescripcionLarga');
+        $tcFechaVencimiento = $request->input('tcFechaVencimiento');
+        $tnSalario = $request->input('tnSalario');
+        $tnTiempoExperiencia = $request->input('tnTiempoExperiencia');
+
+        $tnTipoEmpleo = $request->input('tnTipoEmpleo');
+        $tcDireccion = $request->input('tcDireccion');
+        $tnCategoria = $request->input('tnCategoria');
+    
+       
+    
+        try {
+            // Iniciar una transacción
+            DB::beginTransaction();
+    
+            // Insertar en la tabla usuario
+            $empleoId = DB::table('empleo')->insertGetId([
+                //'Empleo' => 1,
+                'Titulo' => $tcTitulo,
+                'Descripcion' => $tcDescripcion,
+                'FechaVencimiento' => $tcFechaVencimiento,
+                'SalarioAproximado' => $tnSalario,
+                'Empresa' => $tnEmpresa,
+                'TipoEmpleo' => $tnTipoEmpleo,
+                'FechaPublicacion' => Date("y-m-d"),
+                'Ubicacion' => $tcDireccion,
+                'Lat' => '-19.0333',
+                'Lng' => '-65.2627',
+                'Categoria' => $tnCategoria,
+                'TiempoExperiencia' => $tnTiempoExperiencia,
+                'Estado' => 1,
+                'CodigoEmpleo' => uniqid(), 
+                'DescripcionLarga' => $tcDescripcionLarga
+            ]);
+    
+            // Insertar en la tabla candidato
+            DB::table('candidato')->insert([
+                'Nombre' => $tcNombre . ' ' . $tcApellidos,
+                'Profesion' => $tcProfesion,
+                'Estado' => 1,
+                'Usuario' => $usuarioId,
+                'CandidatoCodigo' => uniqid(), // Generar un código único para el candidato
+                'FechaNacimiento' => null,
+                'Acercade' => null,
+                'Pais' => null,
+                'Ciudad' => null,
+                'Sexo' => null,
+                'TituloTecnico' => null,
+                'TituloLicenciatura' => null,
+                'TituloDiplomado' => null,
+                'TituloMaestria' => null,
+                'TituloDoctorado' => null,
+                'AnosExperiencia' => null,
+                'Telefono' => $tnTelefono,
+            ]);
+    
+
+                 // Insertar en la tabla empresa
+                $empresaId = DB::table('empresa')->insertGetId([
+                    'Nombre' => $tcNombreEmpresa,
+                    'NombreComercial' => $tcNombreEmpresa, // Puedes usar el mismo nombre si no hay nombre comercial
+                    'Direccion' => null, // Opcional
+                    'Descripcion' => $tcDescripcion,
+                    'UrlImagen' => null, // Opcional
+                    'UrlIcono' => null, // Opcional
+                    'Estado' => 1, // Estado activo
+                    'TipoEmpresa' => null, // Opcional
+                    'TamañoEmpresa' => null, // Opcional
+                    'AñoFundacion' => $tnAnoFundacion,
+                    'EmpresaCodigo' => uniqid(), // Generar un código único para la empresa
+                    'Acercade' => null, // Opcional
+                    'Telefono' => $tnTelefono,
+                    'Correo' => $tcCorreo, // Correo del usuario
+                    'Pais' => null, // Opcional
+                    'Ciudad' => null, // Opcional
+                   // 'Usuario' => $usuarioId, // Asociar la empresa al usuario creado
+                ]);
+
+                $ultimoSerial = DB::table('usuarioempresa')
+                ->where('Usuario', $usuarioId)
+                ->max('Serial');
+
+            // Calcular el nuevo Serial
+            $nuevoSerial = $ultimoSerial ? $ultimoSerial + 1 : 1;
+
+            // Insertar en la tabla usuarioempresa
+            DB::table('usuarioempresa')->insert([
+                'Usuario' => $usuarioId,
+                'Serial' => $nuevoSerial,
+                'Empresa' => $empresaId,
+                'Estado' => 1, // Estado activo
+            ]);
+
+
+            // Confirmar la transacción (commit)
+            DB::commit();
+    
+            // Armar la respuesta
+            $oPaquete = [
+                'error' => false,
+                'message' => 'Empresa creada con éxito.',
+                'values' => [
+                    'usuarioId' => $empresaId,
+                ]
+            ];
+        }
+        catch (\Throwable $ex) {
+            // Revertir la transacción (rollback) en caso de error
+            DB::rollBack();
+    
+            // Armar la respuesta de error
+            $oPaquete = [
+                'error' => true,
+                'message' => $ex->getMessage(),
+                'values' => null,
+                "codigoerror"=>2
+            ];
+        }
+    
+        // Retornar la respuesta en formato JSON
+        return response()->json($oPaquete);
+    }
+
 
 
 
