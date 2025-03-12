@@ -576,53 +576,7 @@ class ServiciosControler extends Controller
 
     
     public function crearempleosempresa(Request $request){
-        /*
-        datos a enviar  
-{tcTitulo: '', tcDescripcion: '', tcDescripcionLarga: '', tcFechaVencimiento: '', tnSalario: 0, …}
-taHabilidades
-: 
-[]
-taIdiomas
-: 
-[]
-taRequerimientos
-: 
-[]
-taResponsabilidades
-: 
-[]
-tcDescripcion
-: 
-""
-tcDescripcionLarga
-: 
-""
-tcDireccion
-: 
-""
-tcFechaVencimiento
-: 
-""
-tcTitulo
-: 
-""
-tnCategoria
-: 
-0
-tnSalario
-: 
-0
-tnTiempoExperiencia
-: 
-""
-tnTipoEmpleo
-: 
-0
-[[Prototype]]
-: 
-Object
-        
-        */
+       
         
         
         // Recuperar los datos del request
