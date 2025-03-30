@@ -590,7 +590,12 @@ class ServiciosControler extends Controller
         $tnTipoEmpleo = $request->input('tnTipoEmpleo');
         $tcDireccion = $request->input('tcDireccion');
         $tnCategoria = $request->input('tnCategoria');
+        $taHabilidades = $request->input('taHabilidades');
+        $taIdiomas = $request->input('taIdiomas');
+        $taResponsabilidades = $request->input('tnCategoria');
+        $taRequerimientos = $request->input('tnCategoria');
     
+
        
     
         try {
@@ -608,8 +613,8 @@ class ServiciosControler extends Controller
                 'TipoEmpleo' => $tnTipoEmpleo,
                 'FechaPublicacion' => Date("y-m-d"),
                 'Ubicacion' => $tcDireccion,
-                'Lat' => '-19.0333',
-                'Lng' => '-65.2627',
+                'Lat' => '-17.783269751313597',
+                'Lng' => '-63.18217161546975',
                 'Categoria' => $tnCategoria,
                 'TiempoExperiencia' => $tnTiempoExperiencia,
                 'Estado' => 1,
@@ -617,63 +622,48 @@ class ServiciosControler extends Controller
                 'DescripcionLarga' => $tcDescripcionLarga
             ]);
     
-            // Insertar en la tabla candidato
-            DB::table('candidato')->insert([
-                'Nombre' => $tcNombre . ' ' . $tcApellidos,
-                'Profesion' => $tcProfesion,
-                'Estado' => 1,
-                'Usuario' => $usuarioId,
-                'CandidatoCodigo' => uniqid(), // Generar un código único para el candidato
-                'FechaNacimiento' => null,
-                'Acercade' => null,
-                'Pais' => null,
-                'Ciudad' => null,
-                'Sexo' => null,
-                'TituloTecnico' => null,
-                'TituloLicenciatura' => null,
-                'TituloDiplomado' => null,
-                'TituloMaestria' => null,
-                'TituloDoctorado' => null,
-                'AnosExperiencia' => null,
-                'Telefono' => $tnTelefono,
-            ]);
+
+            for ($i=0; $i <  count($taHabilidades) ; $i++) { 
+                    $tnHabilidades= $taHabilidades[$i]; 
+                   // Insertar en la tabla candidato
+                DB::table('empleohabilidades')->insert([
+                    'Empleo' => $empleoId,
+                    'Serial' => $tnSerial,
+                    'Habilidades' => $tnHabilidades,
+                    'Estado' => 1
+                ]);
+            }
+
+                $tnSerial=0;
+                for ($j=0; $j <count($taRequerimientos) ; $j++) { 
+                    $tnSerial=$tnSerial+1;
+                    $tcRequerimiento=$taRequerimientos[$i]->Descripcion;
+                    DB::table('empleorequerimiento')->insert([
+                        'Empleo' => $empleoId,
+                        'Serial' => $tnSerial,
+                        'Descripcion' => $tcRequerimiento,
+                        'Estado' => 1
+                    ]);
+
+                }
+
+                $tnSerial=0;
+                for ($j=0; $j <count($taResponsabilidades) ; $j++) { 
+                    # code...
+                    $tnSerial=$tnSerial+1;
+                    $tcResponsabilidades=$taResponsabilidades[$i]->Descripcion;
+                    DB::table('empleoresponsabilidades')->insert([
+                        'Empleo' => $empleoId,
+                        'Serial' => $tnSerial,
+                        'Descripcion' => $tcResponsabilidades,
+                        'Estado' => 1
+                    ]);
+
+                }
+         
     
 
-                 // Insertar en la tabla empresa
-                $empresaId = DB::table('empresa')->insertGetId([
-                    'Nombre' => $tcNombreEmpresa,
-                    'NombreComercial' => $tcNombreEmpresa, // Puedes usar el mismo nombre si no hay nombre comercial
-                    'Direccion' => null, // Opcional
-                    'Descripcion' => $tcDescripcion,
-                    'UrlImagen' => null, // Opcional
-                    'UrlIcono' => null, // Opcional
-                    'Estado' => 1, // Estado activo
-                    'TipoEmpresa' => null, // Opcional
-                    'TamañoEmpresa' => null, // Opcional
-                    'AñoFundacion' => $tnAnoFundacion,
-                    'EmpresaCodigo' => uniqid(), // Generar un código único para la empresa
-                    'Acercade' => null, // Opcional
-                    'Telefono' => $tnTelefono,
-                    'Correo' => $tcCorreo, // Correo del usuario
-                    'Pais' => null, // Opcional
-                    'Ciudad' => null, // Opcional
-                   // 'Usuario' => $usuarioId, // Asociar la empresa al usuario creado
-                ]);
-
-                $ultimoSerial = DB::table('usuarioempresa')
-                ->where('Usuario', $usuarioId)
-                ->max('Serial');
-
-            // Calcular el nuevo Serial
-            $nuevoSerial = $ultimoSerial ? $ultimoSerial + 1 : 1;
-
-            // Insertar en la tabla usuarioempresa
-            DB::table('usuarioempresa')->insert([
-                'Usuario' => $usuarioId,
-                'Serial' => $nuevoSerial,
-                'Empresa' => $empresaId,
-                'Estado' => 1, // Estado activo
-            ]);
+              
 
 
             // Confirmar la transacción (commit)
@@ -682,9 +672,9 @@ class ServiciosControler extends Controller
             // Armar la respuesta
             $oPaquete = [
                 'error' => false,
-                'message' => 'Empresa creada con éxito.',
+                'message' => 'Empleo  creado con éxito.',
                 'values' => [
-                    'usuarioId' => $empresaId,
+                    'Empleo' => $empleoId,
                 ]
             ];
         }
@@ -696,6 +686,192 @@ class ServiciosControler extends Controller
             $oPaquete = [
                 'error' => true,
                 'message' => $ex->getMessage(),
+                'values' => null,
+                "codigoerror"=>2
+            ];
+        }
+    
+        // Retornar la respuesta en formato JSON
+        return response()->json($oPaquete);
+    }
+
+
+
+
+
+    
+    public function crearcurriculumcandidato(Request $request){
+       
+        
+        // Recuperar los datos del request
+        $tnCandidato = $request->input('tnCandidato');
+        $tcTituloCurriculum = $request->input('tcTituloCurriculum');
+        $PerfilProfesional = $request->input('PerfilProfesional');
+        $tcCorreo = $request->input('tcCorreo');
+        $tcTelefono = $request->input('tcTelefono');
+
+        $tcNombreCompleto=$request->input('tcNombreCompleto');
+
+        $tcDireccion = $request->input('tcDireccion');
+        $taCertificaciones = $request->input('taCertificaciones');
+
+        $taFormaciones = $request->input('taFormaciones');
+        $taExperiencias = $request->input('taExperiencias');
+        $taHabilidades = $request->input('taHabilidades');
+        $taIdiomas = $request->input('taIdiomas');
+
+            // Validar el token
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            }
+            $lnUsuario =$loUsuario->Usuario;
+
+       
+     
+    
+        try {
+            // Iniciar una transacción
+            DB::beginTransaction();
+    
+            // Insertar en la tabla usuario
+            $tnCurriculum = DB::table('curriculum')->insertGetId([
+                //'Empleo' => 1,
+                'Titulo' => $tcTituloCurriculum,
+                'FechaCreacion' => Date("y-m-d"),
+                'Candidato' => $tnCandidato,
+                'Estado' => 1,
+                'PerfilProfesional' => $PerfilProfesional,
+                'Correo' => $tcCorreo,
+                'Telefono' => @$tnTelefono,
+                "Direccion"=>$tcDireccion,
+                "NombreCompleto"=>$tcNombreCompleto,
+
+            ]);
+
+            $tnSerial=0;
+            for ($j=0; $j <count($taCertificaciones) ; $j++) { 
+                $tnSerial=$tnSerial+1;
+                $tcNombre=$taCertificaciones[$i]->Nombre;
+                $tcNombreInstitucion=$taCertificaciones[$i]->NombreInstitucion;
+                $tcPeriodo=$taCertificaciones[$i]->Periodo;
+                $tcDescripcion=$taCertificaciones[$i]->Descripcion;
+
+                DB::table('curriculuncertificaciones')->insert([
+                    'Curriculum' => $tnCurriculum,
+                    'Serial' => $tnSerial,
+                    'Nombre' => $tcNombre,
+                    'NombreInstitucion' => $tcNombreInstitucion,
+                    'Periodo' => $tcPeriodo,
+                    'Estado' => $tcDescripcion , 
+                    'Estado' => 1
+                    
+                ]);
+
+            }
+
+            $tnSerial=0;
+
+            for ($i=0; $i <  count($taHabilidades) ; $i++) { 
+                $tnSerial=$tnSerial+1;
+                    $tnHabilidades= $taHabilidades[$i]; 
+                   // Insertar en la tabla candidato
+                DB::table('curriculumhabilidades')->insert([
+                    'Curriculum' => $tnCurriculum,
+                    'Serial' => $tnSerial,
+                    'Habilidades' => $tnHabilidades,
+                    'Estado' => 1
+                ]);
+            }
+            $tnSerial=0;
+            for ($i=0; $i <  count($taIdiomas) ; $i++) { 
+                $tcIdioma= $taIdiomas[$i]; 
+                $tnSerial=$tnSerial+1;
+                // Insertar en la tabla candidato
+                DB::table('curriculumidioma')->insert([
+                    'Curriculum' => $tnCurriculum,
+                    'Serial' => $tnSerial,
+                    'Idioma' => $tcIdioma,
+                    'Estado' => 1
+                ]);
+            }
+
+
+               
+
+                $tnSerial=0;
+                for ($j=0; $j <count($taExperiencias) ; $j++) { 
+                    # code...
+                    $tnSerial=$tnSerial+1;
+                    $tcNombre=$taExperiencias[$i]->Nombre;
+                    $tcNombreInstitucion=$taExperiencias[$i]->NombreInstitucion;
+                    $tcPeriodo=$taExperiencias[$i]->Periodo;
+                    $tcDescripcion=$taExperiencias[$i]->Descripcion;
+    
+                    DB::table('curriculunexperiencialaboral')->insert([
+                        'Curriculum' => $tnCurriculum,
+                        'Serial' => $tnSerial,
+                        'Nombre' => $tcNombre,
+                        'Institucion' => $tcNombreInstitucion,
+                        'Periodo' => $tcPeriodo,
+                        'Descripcion' => $tcDescripcion , 
+                        'Estado' => 1
+                        
+                    ]);
+
+                }
+         
+                
+                $tnSerial=0;
+                for ($j=0; $j <count($taFormaciones) ; $j++) { 
+                    # code...
+                    $tnSerial=$tnSerial+1;
+                    $tcNombre=$taFormaciones[$i]->Nombre;
+                    $tcNombreInstitucion=$taFormaciones[$i]->NombreInstitucion;
+                    $tcPeriodo=$taFormaciones[$i]->Periodo;
+                    $tcDescripcion=$taFormaciones[$i]->Descripcion;
+    
+                    DB::table('curriculumformacion')->insert([
+                        'Curriculum' => $tnCurriculum,
+                        'Serial' => $tnSerial,
+                        'Nombre' => $tcNombre,
+                        'Institucion' => $tcNombreInstitucion,
+                        'Periodo' => $tcPeriodo,
+                        'Estado' => 1
+                        
+                    ]);
+
+                }
+         
+
+
+            // Confirmar la transacción (commit)
+            DB::commit();
+    
+            // Armar la respuesta
+            $oPaquete = [
+                'error' => false,
+                'message' => 'Empleo  creado con éxito.',
+                'values' => [
+                    'Empleo' => $tnCurriculum,
+                ]
+            ];
+        }
+        catch (\Throwable $ex) {
+            // Revertir la transacción (rollback) en caso de error
+            DB::rollBack();
+    
+            // Armar la respuesta de error
+            $oPaquete = [
+                'error' => true,
+                'message' => $ex->getMessage() ."  ".$ex->getLine() ,
                 'values' => null,
                 "codigoerror"=>2
             ];

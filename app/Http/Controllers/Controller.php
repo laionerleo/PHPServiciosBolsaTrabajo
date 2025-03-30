@@ -269,4 +269,30 @@ class Controller extends BaseController
     }
     
 
+    public function getplantillas(Request $request)
+    {
+        try {
+            // Realizar la consulta para obtener todas las categorías
+            $categorias = DB::table('plantillacurriculum')->select('PlantillaCurriculum', 'NombreDescripcion',  'HtmlPlantilla')->get();
+
+            // Armar la respuesta
+            $oPaquete = [
+                'error' => true,
+                'message' => 'Categorías obtenidas con éxito.',
+                'values' => $categorias
+            ];
+        }
+        catch (\Throwable $ex) {
+            // Manejo de excepciones
+            $oPaquete = [
+                'error' => false,
+                'message' => $ex->getMessage(),
+                'values' => null
+            ];
+        }
+
+        // Retornar la respuesta en formato JSON
+        return response()->json($oPaquete);
+    }
+
 }

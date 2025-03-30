@@ -32,6 +32,10 @@ Route::post('servicio/crearcandidatoempresa', [ServiciosControler::class, "crear
 Route::post('servicio/listarempleosbyempresa', [ServiciosControler::class, "listarempleosbyempresa"]);
 Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "listarempleosbycandidato"]);
 
+Route::get('servicio/listarplantillas', [Controller::class, "getplantillas"]);
+
+
+
 
 
 
@@ -54,9 +58,15 @@ Route::middleware('jwt.auth')->post('aplicaratrabajo', [ServiciosControler::clas
 
 
 
+
+
 //listar empleos a los que etsoy postulando 
 Route::middleware('jwt.auth')->post('listarempleosbycandidatos', [ServiciosControler::class, 'getDatosUsuario']);
 
 //listar candidatos bya emplos  empleos a los que etsoy postulando 
 Route::middleware('jwt.auth')->post('listarcandidatosbyempleos', [ServiciosControler::class, 'getDatosUsuario']);
+
+
+Route::middleware('jwt.auth')->post('servicio/crearcurriculumcandidato', [ServiciosControler::class, 'crearcurriculumcandidato']);
+
 
