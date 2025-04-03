@@ -30,7 +30,9 @@ Route::post('servicio/getDatosCandidato', [Controller::class, "getDetalleCandida
 Route::post('servicio/crearcandidato', [ServiciosControler::class, "crearcandidato"]);
 Route::post('servicio/crearcandidatoempresa', [ServiciosControler::class, "crearcandidatoempresa"]);
 Route::post('servicio/listarempleosbyempresa', [ServiciosControler::class, "listarempleosbyempresa"]);
+Route::post('servicio/listarempleosbyempresames', [ServiciosControler::class, "listarempleosbyempresames"]);
 Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "listarempleosbycandidato"]);
+Route::post('servicio/listarempleosbycandidatomes', [ServiciosControler::class, "listarempleosbycandidatomes"]);
 
 Route::get('servicio/listarplantillas', [Controller::class, "getplantillas"]);
 

@@ -360,6 +360,61 @@ class ServiciosControler extends Controller
     }
 
     
+    public function listarempleosbycandidatomes(Request $request)
+    {
+        try {
+            // Validar el token
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            }
+            $lnUsuario =$loUsuario->Usuario;
+        
+            $empleos = DB::table('empleo as e')
+            ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+            ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
+            ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+            ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
+            ->leftJoin('candidatoempleo as ce', 'e.Empleo', '=', 'ce.Empleo') // Unir con candidatoempleo
+            ->leftJoin('candidato as cand', 'ce.Candidato', '=', 'cand.Candidato') // Unir con candidato
+            ->select(
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
+                'e.Categoria', 'e.TiempoExperiencia', 
+                'c.Nombre as CategoriaNombre', 
+                'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
+                'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
+                'e.CodigoEmpleo',
+                'ce.FechaPostulacion', 'ce.Estado' // Información de la postulación
+            )
+            ->where('cand.Usuario', '=', $lnUsuario) // Filtrar por el Usuario asociado al candidato
+            ->whereMonth('ce.FechaPostulacion', now()->month) // Filtrar por el mes actual
+            ->get();
+        
+
+            return response()->json([
+                'message' => 'empleos de la empresa ',
+                'error' => false,
+                'Datos' => $empleos
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'Error catch'. $e->getMessage(),
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
+        }
+    }
+
+    
 
     public function crearcandidato(Request $request){
         // Recuperar los datos del request
@@ -759,10 +814,10 @@ class ServiciosControler extends Controller
             $tnSerial=0;
             for ($j=0; $j <count($taCertificaciones) ; $j++) { 
                 $tnSerial=$tnSerial+1;
-                $tcNombre=$taCertificaciones[$i]->Nombre;
-                $tcNombreInstitucion=$taCertificaciones[$i]->NombreInstitucion;
-                $tcPeriodo=$taCertificaciones[$i]->Periodo;
-                $tcDescripcion=$taCertificaciones[$i]->Descripcion;
+                $tcNombre=$taCertificaciones[$j]->Nombre;
+                $tcNombreInstitucion=$taCertificaciones[$j]->NombreInstitucion;
+                $tcPeriodo=$taCertificaciones[$j]->Periodo;
+                $tcDescripcion=$taCertificaciones[$j]->Descripcion;
 
                 DB::table('curriculuncertificaciones')->insert([
                     'Curriculum' => $tnCurriculum,
@@ -806,14 +861,16 @@ class ServiciosControler extends Controller
 
                
 
+            if(count($taExperiencias)>0)
+            {
                 $tnSerial=0;
                 for ($j=0; $j <count($taExperiencias) ; $j++) { 
                     # code...
                     $tnSerial=$tnSerial+1;
-                    $tcNombre=$taExperiencias[$i]->Nombre;
-                    $tcNombreInstitucion=$taExperiencias[$i]->NombreInstitucion;
-                    $tcPeriodo=$taExperiencias[$i]->Periodo;
-                    $tcDescripcion=$taExperiencias[$i]->Descripcion;
+                    $tcNombre=$taExperiencias[$j]["Nombre"];
+                    $tcNombreInstitucion=$taExperiencias[$j]["NombreInstitucion"];
+                    $tcPeriodo=$taExperiencias[$j]["Periodo"];
+                    $tcDescripcion=$taExperiencias[$j]["Descripcion"];
     
                     DB::table('curriculunexperiencialaboral')->insert([
                         'Curriculum' => $tnCurriculum,
@@ -828,15 +885,18 @@ class ServiciosControler extends Controller
 
                 }
          
-                
+            }
+            
+            if(count($taFormaciones)>0)
+            {
                 $tnSerial=0;
-                for ($j=0; $j <count($taFormaciones) ; $j++) { 
+                for ($k=0; $k <count($taFormaciones) ; $k++) { 
                     # code...
                     $tnSerial=$tnSerial+1;
-                    $tcNombre=$taFormaciones[$i]->Nombre;
-                    $tcNombreInstitucion=$taFormaciones[$i]->NombreInstitucion;
-                    $tcPeriodo=$taFormaciones[$i]->Periodo;
-                    $tcDescripcion=$taFormaciones[$i]->Descripcion;
+                    $tcNombre=$taFormaciones[$k]["Nombre"];
+                    $tcNombreInstitucion=$taFormaciones[$k]["NombreInstitucion"];
+                    $tcPeriodo=$taFormaciones[$k]["Periodo"];
+                    $tcDescripcion=$taFormaciones[$k]["Descripcion"];
     
                     DB::table('curriculumformacion')->insert([
                         'Curriculum' => $tnCurriculum,
@@ -850,6 +910,9 @@ class ServiciosControler extends Controller
 
                 }
          
+            }
+                
+                
 
 
             // Confirmar la transacción (commit)
@@ -871,7 +934,7 @@ class ServiciosControler extends Controller
             // Armar la respuesta de error
             $oPaquete = [
                 'error' => true,
-                'message' => $ex->getMessage() ."  ".$ex->getLine() ,
+                'message' => $ex->getMessage() ."  ".$ex->getLine() .json_encode($taFormaciones),
                 'values' => null,
                 "codigoerror"=>2
             ];
@@ -882,6 +945,68 @@ class ServiciosControler extends Controller
     }
 
 
+
+    // Método para validar token y traer los datos
+    public function listarempleosbyempresames(Request $request)
+    {
+        try {
+            // Validar el token
+            
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            } 
+            $lnUsuario =$loUsuario->Usuario;
+            
+            $empleos = DB::table('empleo as e')
+            ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+            ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
+            ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+            ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
+            ->select(
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
+                'e.Categoria', 'e.TiempoExperiencia', 
+                'c.Nombre as CategoriaNombre', 
+                'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
+                'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
+                'e.CodigoEmpleo'
+            )
+            ->whereMonth('e.FechaPublicacion', now()->month) // Filtra por el mes actual
+            ->whereYear('e.FechaPublicacion', now()->year) // Filtra por el año actual
+            ->whereIn('e.Empleo', function($query) use ($lnUsuario) {
+                $query->select('EE.Empleo')
+                      ->from('empresaempleo as EE')
+                      ->whereIn('EE.Empresa', function($query) use ($lnUsuario) {
+                          $query->select('UE.Empresa')
+                                ->from('usuarioempresa as UE')
+                                ->where('UE.Usuario', '=', $lnUsuario);
+                      });
+            })
+            ->get();
+
+
+            return response()->json([
+                'message' => 'empleos de la empresa del mes ',
+                'error' => false,
+                'Datos' => $empleos
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'Error catch'. $e->getMessage(),
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
+        }
+    }
 
 
 
