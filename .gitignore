@@ -5,3 +5,9 @@
 *.stTheme.cache
 *.sublime-workspace
 *.sublime-project
+/storage/
+/vendor/
+.env
+*.env
+.env.local
+.env*.local
