@@ -6,12 +6,46 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller as BaseController;
+use App\Models\Utils\mPaqueteEmpleo; // Asegúrate de que la ruta sea correcta
 
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    // Add:19/06/2025, By:Yony Zarate Paco, Nota: Metodo para obtener los datos basicos de la aplicacion
+    // Este metodo obtiene los datos basicos de la aplicacion, como paises, ciudades
+    public function ObtenerDatosBasicos(Request $request)
+    {
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
+        try {
+            $lcListarPais = "SELECT P.* FROM pais AS P where P.Estado = 1";
+            $loDatosPais = DB::select($lcListarPais);
+
+            $lcListarCiudad = "SELECT C.* FROM ciudad AS C where C.Estado = 1";
+            $loDatosCiudad = DB::select($lcListarCiudad);
+
+            $lcListaremple = "SELECT * FROM empleo  ";
+            $loDatosEmpleo = DB::select($lcListaremple);
+
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "Datos Obtenidos.";
+            $loPaquete->values = [
+                "DatosDePais" => $loDatosPais,
+                "DatosDeCiudad" => $loDatosCiudad,
+                "DatosDeEmpleo" => $loDatosEmpleo,
+            ];
+            return response()->json($loPaquete);
+        } catch (\Throwable $th) {
+            $lcMessageError = "Error: " . $th->getMessage() . " \nLinea: " . $th->getLine() . " \nArchivo: " . $th->getFile();
+
+            $loPaquete->message = "Error -: " . $th->getMessage()." \nLinea: " . $th->getLine() . " \nArchivo: " . $th->getFile();
+
+            return response()->json($loPaquete);
+        }
+    }
 
     public function getlistaempleos(Request $request)
     {
@@ -23,17 +57,17 @@ class Controller extends BaseController
                 ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
                 ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
                 ->select(
-                    'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                    'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                    'e.Categoria', 'e.TiempoExperiencia', 
-                    'c.Nombre as CategoriaNombre', 
+                    'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                    'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                    'e.Categoria', 'e.TiempoExperiencia',
+                    'c.Nombre as CategoriaNombre',
                     'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                     'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                     'e.CodigoEmpleo'
 
                 )
                 ->get();
-    
+
             // Armar la respuesta
             $oPaquete = [
                 'error' => true,
@@ -49,7 +83,7 @@ class Controller extends BaseController
                 'values' => null
             ];
         }
-    
+
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
@@ -91,12 +125,14 @@ class Controller extends BaseController
                 ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
                 ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
                 ->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
+                ->leftJoin('ciudad as ci', 'e.Ubicacion', '=', 'ci.Ciudad')
                 ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
                 ->select(
-                    'e.Empleo', 'e.Titulo',   'e.DescripcionLarga', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                    'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                    'e.Categoria', 'e.TiempoExperiencia', 
-                    'c.Nombre as CategoriaNombre', 
+                    'e.Empleo', 'e.Titulo',   'e.DescripcionLarga', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                    'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                    'e.Categoria', 'e.TiempoExperiencia',
+                    'c.Nombre as CategoriaNombre',
+                    'ci.Nombre as NombreCiudad',
                     'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                     'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo'
                 )
@@ -104,7 +140,7 @@ class Controller extends BaseController
 
                 ->get();
 
-                // traer requerimiento 
+                // traer requerimiento
                 $empleosrequerimiento = DB::table('empleo as e')
                 ->leftJoin('empleorequerimiento as er', 'e.Empleo', '=', 'er.Empleo')
                 ->select(
@@ -147,7 +183,7 @@ class Controller extends BaseController
         return response()->json($oPaquete);
     }
 
-    
+
     public function getDetalleEmpresa(Request $request)
     {
 
@@ -168,8 +204,8 @@ class Controller extends BaseController
 
 
 
-                // traer requerimiento 
-            
+                // traer requerimiento
+
 
             $laDatosEmpresa=[
                 "loEmpresa"=> @$loEmpresa,
@@ -197,7 +233,7 @@ class Controller extends BaseController
     }
 
 
-    
+
     public function getDetalleCandidato(Request $request)
     {
 
@@ -210,10 +246,10 @@ class Controller extends BaseController
                 //->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
                 //->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
             /*    ->select(
-                    'e.Empleo', 'e.Titulo',   'e.DescripcionLarga', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                    'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                    'e.Categoria', 'e.TiempoExperiencia', 
-                    'c.Nombre as CategoriaNombre', 
+                    'e.Empleo', 'e.Titulo',   'e.DescripcionLarga', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                    'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                    'e.Categoria', 'e.TiempoExperiencia',
+                    'c.Nombre as CategoriaNombre',
                     'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                     'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo'
                 )*/
@@ -222,7 +258,7 @@ class Controller extends BaseController
                 ->get();
 
                 /*
-                // traer requerimiento 
+                // traer requerimiento
                 $empleosrequerimiento = DB::table('empleo as e')
                 ->leftJoin('empleorequerimiento as er', 'e.Empleo', '=', 'er.Empleo')
                 ->select(
@@ -267,7 +303,7 @@ class Controller extends BaseController
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
-    
+
 
     public function getplantillas(Request $request)
     {
@@ -293,6 +329,88 @@ class Controller extends BaseController
 
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
+    }
+
+    public function getAllEmplos( Request $toRequest)
+    {
+
+
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
+        $lnCiudad=$toRequest->tnCiudad ?? 0;
+        $lnCategoria=$toRequest->tnCategoria ?? 0;
+
+        try {
+            $lcListarEmpleos = "
+                                SELECT
+                                    e.Empleo,
+                                    e.Titulo,
+                                    e.Descripcion,
+                                    e.FechaVencimiento,
+                                    e.SalarioAproximado,
+                                    e.FechaPublicacion,
+                                    e.Ubicacion,
+                                    ci.Nombre AS NombreCiudad,
+                                    e.Lat,
+                                    e.Lng,
+                                    e.Categoria,
+                                    e.TiempoExperiencia,
+                                    c.Nombre AS CategoriaNombre,
+                                    e.Empresa,
+                                    emp.EmpresaCodigo,
+                                    emp.Nombre AS EmpresaNombre,
+                                    emp.Descripcion AS EmpresaDescripcion,
+                                    te.Nombre AS TipoEmpleoNombre,
+                                    tec.Titulo AS TiempoExperienciaTitulo,
+                                    e.CodigoEmpleo
+                                FROM empleo AS e
+                                LEFT JOIN categoria AS c ON e.Categoria = c.Categoria
+                                LEFT JOIN empresa AS emp ON e.Empresa = emp.Empresa
+                                LEFT JOIN tipoempleo AS te ON e.TipoEmpleo = te.TipoEmpleo
+                                LEFT JOIN ciudad AS ci ON e.Ubicacion= ci.Ciudad
+                                LEFT JOIN tiempoexperiencia AS tec ON e.TiempoExperiencia = tec.TiempoExperiencia
+                                WHERE e.Estado = 1
+                                ";
+
+
+                                if ($lnCiudad != 0) {
+                                    $lcListarEmpleos .= " AND e.Ubicacion = $lnCiudad";
+                                }
+
+                                if ($lnCategoria != 0) {
+                                    $lcListarEmpleos .= " AND e.Categoria = $lnCategoria";
+                                }
+
+            // $lcListarEmpleos .= " 	GROUP BY e.Empleo  ORDER BY e.Empleo DESC";
+
+            $loSqlempleos = DB::select($lcListarEmpleos);
+
+
+
+            if (empty($loSqlempleos)) {
+
+                $loPaquete->error = 1;
+                $loPaquete->status = 0;
+                $loPaquete->message = "No hay lista de empleos.";
+                $loPaquete->values = [];
+
+                return response()->json($loPaquete);
+            }
+
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "Lista de empleos obtenida correctamente.";
+            $loPaquete->values = $loSqlempleos;
+
+            return response()->json($loPaquete);
+        } catch (\Throwable $th) {
+
+            $lcMessageError = "Error: " . $th->getMessage() . " \nLinea: " . $th->getLine() . " \nArchivo: " . $th->getFile();
+
+            $loPaquete->message = "Error - No se Logro obtener la lista: " . $lcMessageError;
+
+            return response()->json($loPaquete);
+        }
+
     }
 
 }

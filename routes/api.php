@@ -33,6 +33,8 @@ Route::post('servicio/listarempleosbyempresa', [ServiciosControler::class, "list
 Route::post('servicio/listarempleosbyempresames', [ServiciosControler::class, "listarempleosbyempresames"]);
 Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "listarempleosbycandidato"]);
 Route::post('servicio/listarempleosbycandidatomes', [ServiciosControler::class, "listarempleosbycandidatomes"]);
+Route::post('servicio/obtenerdatosbasicos', [ServiciosControler::class, "ObtenerDatosBasicos"]);
+Route::post('servicio/listaempleos', [ServiciosControler::class, "getAllEmplos"]);
 
 Route::get('servicio/listarplantillas', [Controller::class, "getplantillas"]);
 
@@ -55,17 +57,17 @@ Route::middleware('jwt.auth')->post('listarempleosbyempresa', [ServiciosControle
 Route::middleware('jwt.auth')->post('registrousuario', [ServiciosControler::class, 'getDatosUsuario']);
 
 
-// aplicar a trabajo 
+// aplicar a trabajo
 Route::middleware('jwt.auth')->post('aplicaratrabajo', [ServiciosControler::class, 'getDatosUsuario']);
 
 
 
 
 
-//listar empleos a los que etsoy postulando 
+//listar empleos a los que etsoy postulando
 Route::middleware('jwt.auth')->post('listarempleosbycandidatos', [ServiciosControler::class, 'getDatosUsuario']);
 
-//listar candidatos bya emplos  empleos a los que etsoy postulando 
+//listar candidatos bya emplos  empleos a los que etsoy postulando
 Route::middleware('jwt.auth')->post('listarcandidatosbyempleos', [ServiciosControler::class, 'getDatosUsuario']);
 
 
