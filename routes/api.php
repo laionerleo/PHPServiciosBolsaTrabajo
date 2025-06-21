@@ -31,12 +31,29 @@ Route::post('servicio/crearcandidato', [ServiciosControler::class, "crearcandida
 Route::post('servicio/crearcandidatoempresa', [ServiciosControler::class, "crearcandidatoempresa"]);
 Route::post('servicio/listarempleosbyempresa', [ServiciosControler::class, "listarempleosbyempresa"]);
 Route::post('servicio/listarempleosbyempresames', [ServiciosControler::class, "listarempleosbyempresames"]);
+Route::post('servicio/listarpostulantesbyempresa', [ServiciosControler::class, "listarpostulantesbyempresa"]);
+
 Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "listarempleosbycandidato"]);
 Route::post('servicio/listarempleosbycandidatomes', [ServiciosControler::class, "listarempleosbycandidatomes"]);
+Route::post('servicio/listarcurriculumbycandidato', [ServiciosControler::class, "listarcurriculumbycandidato"]);
+Route::post('servicio/registrarempleo', [ServiciosControler::class, "crearempleosempresa"]);
+
+
+
+
+Route::post('servicio/getpostulantesEmpleo', [Controller::class, "getPostulantesEmpleo"]);
 
 Route::get('servicio/listarplantillas', [Controller::class, "getplantillas"]);
 
 
+Route::post('servicio/generarpago', [ServiciosControler::class, "generarpago"]);
+Route::post('servicio/consultarpago', [ServiciosControler::class, "consultarEstado"]);
+
+
+
+
+Route::post('servicio/generarpagoempleo', [ServiciosControler::class, "generarpago"]);
+Route::post('servicio/consultarpagoempleo', [ServiciosControler::class, "consultarEstado"]);
 
 
 
@@ -72,3 +89,4 @@ Route::middleware('jwt.auth')->post('listarcandidatosbyempleos', [ServiciosContr
 Route::middleware('jwt.auth')->post('servicio/crearcurriculumcandidato', [ServiciosControler::class, 'crearcurriculumcandidato']);
 
 
+Route::middleware('jwt.auth')->post('postularempleo', [ServiciosControler::class, 'aplicaratrabajo']);

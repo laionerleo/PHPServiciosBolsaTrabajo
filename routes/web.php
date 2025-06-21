@@ -22,5 +22,7 @@ Route::get('/', function () {
 //Route::get('/generate-pdf', [PDFController::class, 'generatePDF']);
 
 Route::get('/generate-pdf', [PDFController::class, 'generatePDFCurriculum']);
+Route::get('/generate-pdf2/{id}', [PDFController::class, 'generatePDFCurriculum2']);
+
 
 

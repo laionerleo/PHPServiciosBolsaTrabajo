@@ -122,10 +122,20 @@ class Controller extends BaseController
                 ->where("e.CodigoEmpleo", $tcCodigoEmpleo)
                 ->get();
 
+                $empleohabilidades = DB::table('empleo as e')
+                ->leftJoin('empleohabilidades as er', 'e.Empleo', '=', 'er.Empleos')
+                ->leftJoin('habilidades as hab', 'er.Habilidades', '=', 'hab.Habilidades')
+                ->select(
+                    'e.Empleo', 'er.Serial', 'hab.Descripcion'
+                )
+                ->where("e.CodigoEmpleo", $tcCodigoEmpleo)
+                ->get();
+
             $laDatosEmpleo=[
                 "loEmpleo"=> $empleos[0],
                 "laEmpleoRequerimiento"=>$empleosrequerimiento ,
                 "laEmpleoResponsabilidades"=> $empleoresponsabilidades,
+                "laEmpleoHabilidades"=> $empleohabilidades
             ] ;
             // Armar la respuesta
             $oPaquete = [
@@ -280,6 +290,71 @@ class Controller extends BaseController
                 'error' => true,
                 'message' => 'Categorías obtenidas con éxito.',
                 'values' => $categorias
+            ];
+        }
+        catch (\Throwable $ex) {
+            // Manejo de excepciones
+            $oPaquete = [
+                'error' => false,
+                'message' => $ex->getMessage(),
+                'values' => null
+            ];
+        }
+
+        // Retornar la respuesta en formato JSON
+        return response()->json($oPaquete);
+    }
+
+    public function getPostulantesEmpleo(Request $request)
+    {
+
+        $tcCodigoEmpleo = $request->input('tcCodigoEmpleo');
+        try {
+            // Realizar la consulta con las relaciones
+            $codigoEmpleo = 'EMP-2025-FULLSTACK';
+
+            $laPostulantes = DB::table('candidato as c')
+                ->join('candidatoempleo as ce', 'ce.Candidato', '=', 'c.Candidato')
+                ->join('empleo as e', 'e.Empleo', '=', 'ce.Empleo')
+                ->leftJoin('curriculum as cur', 'cur.Candidato', '=', 'c.Candidato')
+                ->leftJoin('curriculumhabilidades as ch', 'ch.Curriculum', '=', 'cur.Curriculum')
+                ->leftJoin('empleohabilidades as eh', 'eh.Empleos', '=', 'e.Empleo')
+                ->select(
+                    'c.Candidato',
+                    'c.Nombre',
+                    'cur.html',
+                    //'c.Profesion',
+                    'e.Titulo as EmpleoTitulo',
+                    'e.TiempoExperiencia as ExperienciaRequerida',
+                    'c.AnosExperiencia as ExperienciaCandidato',
+                    DB::raw("CASE 
+                        WHEN c.AnosExperiencia >= e.TiempoExperiencia THEN 'Cumple'
+                        ELSE 'No cumple'
+                    END as ComparacionExperiencia"),
+                    DB::raw("COUNT(DISTINCT eh.Habilidades) as HabilidadesRequeridas"),
+                    DB::raw("COUNT(DISTINCT ch.Habilidades) as HabilidadesCandidato"),
+                    DB::raw("CASE            
+                        WHEN COUNT(DISTINCT ch.Habilidades) >= COUNT(DISTINCT eh.Habilidades) THEN 'Cumple'
+                        ELSE 'No cumple'
+                    END as ComparacionHabilidades")
+                )
+                ->where('e.CodigoEmpleo', '=', $tcCodigoEmpleo)
+                ->groupBy(
+                    'c.Candidato',
+                    'c.Nombre',
+                    'e.Titulo',
+                    'e.TiempoExperiencia',
+                    'c.AnosExperiencia',
+                    'cur.html'
+                )
+                ->get();
+            
+
+            // Armar la respuesta
+            $oPaquete = [
+                'error' => true,
+                'message' => 'Empleos obtenidos con éxito.',
+                'values' => $laPostulantes
             ];
         }
         catch (\Throwable $ex) {
