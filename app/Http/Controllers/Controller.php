@@ -186,7 +186,7 @@ class Controller extends BaseController
 
     public function getDetalleEmpresa(Request $request)
     {
-
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
         $tcCodigoEmpresa = $request->input('tcCodigoEmpresa');
         try {
             // Realizar la consulta con las relaciones
@@ -213,23 +213,27 @@ class Controller extends BaseController
                 //"laEmpleoResponsabilidades"=> $empleoresponsabilidades,
             ] ;
             // Armar la respuesta
-            $oPaquete = [
-                'error' => true,
-                'message' => 'Empresa  obtenidos con éxito.',
-                'values' => $laDatosEmpresa
-            ];
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "Empresa  obtenidos con éxito.";
+            $loPaquete->values = $laDatosEmpresa;
+
         }
         catch (\Throwable $ex) {
             // Manejo de excepciones
-            $oPaquete = [
-                'error' => false,
-                'message' => $ex->getMessage(),
-                'values' => null
-            ];
+            // $oPaquete = [
+            //     'error' => false,
+            //     'message' => $ex->getMessage(),
+            //     'values' => null
+            // ];
+            $loPaquete->error = 1;
+            $loPaquete->status = 0;
+            $loPaquete->message = $ex->getMessage();
+            $loPaquete->values = [];
         }
 
         // Retornar la respuesta en formato JSON
-        return response()->json($oPaquete);
+        return response()->json($loPaquete);
     }
 
 
