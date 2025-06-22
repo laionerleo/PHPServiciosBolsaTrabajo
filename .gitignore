@@ -6,3 +6,9 @@
 *.sublime-workspace
 *.sublime-project
 /vendor
+/storage/
+/vendor/
+.env
+*.env
+.env.local
+.env*.local

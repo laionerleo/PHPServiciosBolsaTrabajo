@@ -18,7 +18,7 @@ class ServiciosControler extends Controller
        // Método para login (sin usar modelos)
 
 
-    public function login(Request $request)
+    public function login(Request $request) 
 {
     $credentials = $request->only('email', 'password');
 
@@ -101,13 +101,13 @@ class ServiciosControler extends Controller
             $lnUsuario =$loUsuario->Usuario;
 
             //traer datoc ocom dcadidato
-            $loCandidato = DB::select("SELECT * 
+            $loCandidato = DB::select("SELECT *
                                         FROM candidato
                                         WHERE Usuario=$lnUsuario");
 
-            //traer datos de empresa si en caso tiene 
+            //traer datos de empresa si en caso tiene
 
-            $loEmpresa = DB::select("SELECT * 
+            $loEmpresa = DB::select("SELECT *
                                         FROM usuarioempresa ue, empresa e
                                         WHERE ue.Empresa=e.Empresa
                                         and ue.Usuario =$lnUsuario ");
@@ -185,7 +185,7 @@ class ServiciosControler extends Controller
                 "codigoerror"=>1,
             ]);
         }
-        
+
         try {
             $tnCurriculum = $request->input('tnCurriculum');
             $tcCodigoEmpleo = $request->input('tcCodigoEmpleo');
@@ -252,6 +252,7 @@ class ServiciosControler extends Controller
                     }
                 }
 
+        
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
@@ -271,7 +272,7 @@ class ServiciosControler extends Controller
     {
         try {
             // Validar el token
-            
+
             try {
                 //code...
                 $loUsuario = JWTAuth::parseToken()->authenticate();
@@ -282,7 +283,7 @@ class ServiciosControler extends Controller
                     'error' => true,
                     "codigoerror"=>1,
                 ]);
-            } 
+            }
             $lnUsuario =$loUsuario->Usuario;
 
             
@@ -293,10 +294,10 @@ class ServiciosControler extends Controller
             ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
             ->join('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
             ->select(
-                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                'e.Categoria', 'e.TiempoExperiencia', 
-                'c.Nombre as CategoriaNombre', 
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                'e.Categoria', 'e.TiempoExperiencia',
+                'c.Nombre as CategoriaNombre',
                 'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                 'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                 'e.CodigoEmpleo',
@@ -304,9 +305,9 @@ class ServiciosControler extends Controller
             )
             ->where('ue.Usuario', '=', $lnUsuario)
             ->get();
-        
-        
-            
+
+
+
 
 
             return response()->json([
@@ -342,7 +343,7 @@ class ServiciosControler extends Controller
                 ]);
             }
             $lnUsuario =$loUsuario->Usuario;
-        
+
             $empleos = DB::table('empleo as e')
             ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
             ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
@@ -352,10 +353,10 @@ class ServiciosControler extends Controller
             ->leftJoin('candidato as cand', 'ce.Candidato', '=', 'cand.Candidato') // Unir con candidato
             ->leftJoin('estadopostulacion as ep', 'ep.EstadoPostulacion', '=', 'ce.Estado') // Unir con candidato
             ->select(
-                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                'e.Categoria', 'e.TiempoExperiencia', 
-                'c.Nombre as CategoriaNombre', 
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                'e.Categoria', 'e.TiempoExperiencia',
+                'c.Nombre as CategoriaNombre',
                 'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                 'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                 'e.CodigoEmpleo',
@@ -365,7 +366,7 @@ class ServiciosControler extends Controller
             )
             ->where('cand.Usuario', '=', $lnUsuario) // Filtrar por el Usuario asociado al candidato
             ->get();
-        
+
 
             return response()->json([
                 'message' => 'empleos de la empresa ',
@@ -382,7 +383,7 @@ class ServiciosControler extends Controller
         }
     }
 
-    
+
     public function listarempleosbycandidatomes(Request $request)
     {
         try {
@@ -399,7 +400,7 @@ class ServiciosControler extends Controller
                 ]);
             }
             $lnUsuario =$loUsuario->Usuario;
-        
+
             $empleos = DB::table('empleo as e')
             ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
             ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
@@ -408,10 +409,10 @@ class ServiciosControler extends Controller
             ->leftJoin('candidatoempleo as ce', 'e.Empleo', '=', 'ce.Empleo') // Unir con candidatoempleo
             ->leftJoin('candidato as cand', 'ce.Candidato', '=', 'cand.Candidato') // Unir con candidato
             ->select(
-                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                'e.Categoria', 'e.TiempoExperiencia', 
-                'c.Nombre as CategoriaNombre', 
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                'e.Categoria', 'e.TiempoExperiencia',
+                'c.Nombre as CategoriaNombre',
                 'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                 'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                 'e.CodigoEmpleo',
@@ -420,7 +421,7 @@ class ServiciosControler extends Controller
             ->where('cand.Usuario', '=', $lnUsuario) // Filtrar por el Usuario asociado al candidato
             ->whereMonth('ce.FechaPostulacion', now()->month) // Filtrar por el mes actual
             ->get();
-        
+
 
             return response()->json([
                 'message' => 'empleos de la empresa ',
@@ -437,7 +438,7 @@ class ServiciosControler extends Controller
         }
     }
 
-    
+
 
     public function crearcandidato(Request $request){
         // Recuperar los datos del request
@@ -447,7 +448,7 @@ class ServiciosControler extends Controller
         $tcNombre = $request->input('tcNombre');
         $tcApellidos = $request->input('tcApellidos');
         $tcProfesion = $request->input('tcProfesion');
-    
+
         // Verificar si el correo ya existe
         $existeUsuario = DB::table('usuario')->where('Correo', $tcCorreo)->exists();
         if ($existeUsuario) {
@@ -458,11 +459,11 @@ class ServiciosControler extends Controller
                 'values' => null
             ]);
         }
-    
+
         try {
             // Iniciar una transacción
             DB::beginTransaction();
-    
+
             // Insertar en la tabla usuario
             $usuarioId = DB::table('usuario')->insertGetId([
                 'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
@@ -472,7 +473,7 @@ class ServiciosControler extends Controller
                 'Estado' => 1,
                 'FechaCreacion' => now(),
             ]);
-    
+
             // Insertar en la tabla candidato
             DB::table('candidato')->insert([
                 'Nombre' => $tcNombre . ' ' . $tcApellidos,
@@ -493,10 +494,10 @@ class ServiciosControler extends Controller
                 'AnosExperiencia' => null,
                 'Telefono' => $tnTelefono,
             ]);
-    
+
             // Confirmar la transacción (commit)
             DB::commit();
-    
+
             // Armar la respuesta
             $oPaquete = [
                 'error' => false,
@@ -509,7 +510,7 @@ class ServiciosControler extends Controller
         catch (\Throwable $ex) {
             // Revertir la transacción (rollback) en caso de error
             DB::rollBack();
-    
+
             // Armar la respuesta de error
             $oPaquete = [
                 'error' => true,
@@ -517,9 +518,9 @@ class ServiciosControler extends Controller
                 'values' => null,
                 "codigoerror"=>2
             ];
-           
+
         }
-    
+
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
@@ -537,7 +538,7 @@ class ServiciosControler extends Controller
         $tcNombreEmpresa = $request->input('tcNombreEmpresa');
         $tcDescripcion = $request->input('tcDescripcion');
         $tnAnoFundacion = $request->input('tnAnoFundacion');
-    
+
         // Verificar si el correo ya existe
         $existeUsuario = DB::table('usuario')->where('Correo', $tcCorreo)->exists();
         if ($existeUsuario) {
@@ -548,11 +549,11 @@ class ServiciosControler extends Controller
                 'values' => null
             ]);
         }
-    
+
         try {
             // Iniciar una transacción
             DB::beginTransaction();
-    
+
             // Insertar en la tabla usuario
             $usuarioId = DB::table('usuario')->insertGetId([
                 'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
@@ -562,7 +563,7 @@ class ServiciosControler extends Controller
                 'Estado' => 1,
                 'FechaCreacion' => now(),
             ]);
-    
+
             // Insertar en la tabla candidato
             DB::table('candidato')->insert([
                 'Nombre' => $tcNombre . ' ' . $tcApellidos,
@@ -583,7 +584,7 @@ class ServiciosControler extends Controller
                 'AnosExperiencia' => null,
                 'Telefono' => $tnTelefono,
             ]);
-    
+
 
                  // Insertar en la tabla empresa
                 $empresaId = DB::table('empresa')->insertGetId([
@@ -624,7 +625,7 @@ class ServiciosControler extends Controller
 
             // Confirmar la transacción (commit)
             DB::commit();
-    
+
             // Armar la respuesta
             $oPaquete = [
                 'error' => false,
@@ -637,7 +638,7 @@ class ServiciosControler extends Controller
         catch (\Throwable $ex) {
             // Revertir la transacción (rollback) en caso de error
             DB::rollBack();
-    
+
             // Armar la respuesta de error
             $oPaquete = [
                 'error' => true,
@@ -646,17 +647,17 @@ class ServiciosControler extends Controller
                 "codigoerror"=>2
             ];
         }
-    
+
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
 
 
-    
+
     public function crearempleosempresa(Request $request){
-       
-        
-        
+
+
+
         // Recuperar los datos del request
         $tcTitulo = $request->input('tcTitulo');
         $tcDescripcion = $request->input('tcDescripcion');
@@ -672,14 +673,14 @@ class ServiciosControler extends Controller
         $taIdiomas = $request->input('taIdiomas');
         $taResponsabilidades = $request->input('tnCategoria');
         $taRequerimientos = $request->input('tnCategoria');
-    
 
-       
-    
+
+
+
         try {
             // Iniciar una transacción
             DB::beginTransaction();
-    
+
             // Insertar en la tabla usuario
             $empleoId = DB::table('empleo')->insertGetId([
                 //'Empleo' => 1,
@@ -696,13 +697,13 @@ class ServiciosControler extends Controller
                 'Categoria' => $tnCategoria,
                 'TiempoExperiencia' => $tnTiempoExperiencia,
                 'Estado' => 1,
-                'CodigoEmpleo' => uniqid(), 
+                'CodigoEmpleo' => uniqid(),
                 'DescripcionLarga' => $tcDescripcionLarga
             ]);
-    
 
-            for ($i=0; $i <  count($taHabilidades) ; $i++) { 
-                    $tnHabilidades= $taHabilidades[$i]; 
+
+            for ($i=0; $i <  count($taHabilidades) ; $i++) {
+                    $tnHabilidades= $taHabilidades[$i];
                    // Insertar en la tabla candidato
                 DB::table('empleohabilidades')->insert([
                     'Empleo' => $empleoId,
@@ -713,7 +714,7 @@ class ServiciosControler extends Controller
             }
 
                 $tnSerial=0;
-                for ($j=0; $j <count($taRequerimientos) ; $j++) { 
+                for ($j=0; $j <count($taRequerimientos) ; $j++) {
                     $tnSerial=$tnSerial+1;
                     $tcRequerimiento=$taRequerimientos[$i]->Descripcion;
                     DB::table('empleorequerimiento')->insert([
@@ -726,7 +727,7 @@ class ServiciosControler extends Controller
                 }
 
                 $tnSerial=0;
-                for ($j=0; $j <count($taResponsabilidades) ; $j++) { 
+                for ($j=0; $j <count($taResponsabilidades) ; $j++) {
                     # code...
                     $tnSerial=$tnSerial+1;
                     $tcResponsabilidades=$taResponsabilidades[$i]->Descripcion;
@@ -738,15 +739,15 @@ class ServiciosControler extends Controller
                     ]);
 
                 }
-         
-    
 
-              
+
+
+
 
 
             // Confirmar la transacción (commit)
             DB::commit();
-    
+
             // Armar la respuesta
             $oPaquete = [
                 'error' => false,
@@ -759,7 +760,7 @@ class ServiciosControler extends Controller
         catch (\Throwable $ex) {
             // Revertir la transacción (rollback) en caso de error
             DB::rollBack();
-    
+
             // Armar la respuesta de error
             $oPaquete = [
                 'error' => true,
@@ -768,7 +769,7 @@ class ServiciosControler extends Controller
                 "codigoerror"=>2
             ];
         }
-    
+
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
@@ -777,12 +778,26 @@ class ServiciosControler extends Controller
 
 
 
-    
-    public function crearcurriculumcandidato(Request $request)
-    {
-       
-      
-      
+
+    public function crearcurriculumcandidato(Request $request){
+
+
+        // Recuperar los datos del request
+        $tnCandidato = $request->input('tnCandidato');
+        $tcTituloCurriculum = $request->input('tcTituloCurriculum');
+        $PerfilProfesional = $request->input('PerfilProfesional');
+        $tcCorreo = $request->input('tcCorreo');
+        $tcTelefono = $request->input('tcTelefono');
+
+        $tcNombreCompleto=$request->input('tcNombreCompleto');
+
+        $tcDireccion = $request->input('tcDireccion');
+        $taCertificaciones = $request->input('taCertificaciones');
+
+        $taFormaciones = $request->input('taFormaciones');
+        $taExperiencias = $request->input('taExperiencias');
+        $taHabilidades = $request->input('taHabilidades');
+        $taIdiomas = $request->input('taIdiomas');
 
             // Validar el token
             try {
@@ -798,9 +813,9 @@ class ServiciosControler extends Controller
             }
             $lnUsuario =$loUsuario->Usuario;
 
-       
-     
-    
+
+
+
         try {
 
               
@@ -874,7 +889,7 @@ class ServiciosControler extends Controller
             
             // Iniciar una transacción
             DB::beginTransaction();
-    
+
             // Insertar en la tabla usuario
             $tnCurriculum = DB::table('curriculum')->insertGetId([
                 //'Empleo' => 1,
@@ -943,12 +958,12 @@ class ServiciosControler extends Controller
             }
 
 
-               
+
 
             if(count($taExperiencias)>0)
             {
                 $tnSerial=0;
-                for ($j=0; $j <count($taExperiencias) ; $j++) { 
+                for ($j=0; $j <count($taExperiencias) ; $j++) {
                     # code...
                     $tnSerial=$tnSerial+1;
                     $tcNombre=$taExperiencias[$j]->Nombre;
@@ -962,19 +977,19 @@ class ServiciosControler extends Controller
                         'Titulo' => $tcNombre,
                         'NombreEmpresa' => $tcNombreInstitucion,
                         'Periodo' => $tcPeriodo,
-                        'Descripcion' => $tcDescripcion , 
+                        'Descripcion' => $tcDescripcion ,
                         'Estado' => 1
-                        
+
                     ]);
 
                 }
-         
+
             }
-            
+
             if(count($taFormaciones)>0)
             {
                 $tnSerial=0;
-                for ($k=0; $k <count($taFormaciones) ; $k++) { 
+                for ($k=0; $k <count($taFormaciones) ; $k++) {
                     # code...
                     $tnSerial=$tnSerial+1;
                     $tcNombre=$taFormaciones[$k]->Nombre;
@@ -989,19 +1004,19 @@ class ServiciosControler extends Controller
                         'Institucion' => $tcNombreInstitucion,
                         'Periodo' => $tcPeriodo,
                         'Estado' => 1
-                        
+
                     ]);
 
                 }
-         
+
             }
-                
-                
+
+
 
 
             // Confirmar la transacción (commit)
             DB::commit();
-    
+
             // Armar la respuesta
             $oPaquete = [
                 'error' => false,
@@ -1014,7 +1029,7 @@ class ServiciosControler extends Controller
         catch (\Throwable $ex) {
             // Revertir la transacción (rollback) en caso de error
             DB::rollBack();
-    
+
             // Armar la respuesta de error
             $oPaquete = [
                 'error' => true,
@@ -1023,7 +1038,7 @@ class ServiciosControler extends Controller
                 "codigoerror"=>2
             ];
         }
-    
+
         // Retornar la respuesta en formato JSON
         return response()->json($oPaquete);
     }
@@ -1035,7 +1050,7 @@ class ServiciosControler extends Controller
     {
         try {
             // Validar el token
-            
+
             try {
                 //code...
                 $loUsuario = JWTAuth::parseToken()->authenticate();
@@ -1046,9 +1061,9 @@ class ServiciosControler extends Controller
                     'error' => true,
                     "codigoerror"=>1,
                 ]);
-            } 
+            }
             $lnUsuario =$loUsuario->Usuario;
-            
+
             $empleos = DB::table('empleo as e')
             ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
             ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
@@ -1056,10 +1071,10 @@ class ServiciosControler extends Controller
             ->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
             ->join('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
             ->select(
-                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado', 
-                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng', 
-                'e.Categoria', 'e.TiempoExperiencia', 
-                'c.Nombre as CategoriaNombre', 
+                'e.Empleo', 'e.Titulo', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
+                'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
+                'e.Categoria', 'e.TiempoExperiencia',
+                'c.Nombre as CategoriaNombre',
                 'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                 'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                 'e.CodigoEmpleo',
