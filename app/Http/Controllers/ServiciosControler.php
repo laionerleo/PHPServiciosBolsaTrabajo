@@ -671,9 +671,26 @@ class ServiciosControler extends Controller
         $tnCategoria = $request->input('tnCategoria');
         $taHabilidades = $request->input('taHabilidades');
         $taIdiomas = $request->input('taIdiomas');
-        $taResponsabilidades = $request->input('tnCategoria');
-        $taRequerimientos = $request->input('tnCategoria');
+        $taResponsabilidades = $request->input('taResponsabilidades');
+        $taRequerimientos = $request->input('taRequerimientos');
 
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            }
+            $lnUsuario =$loUsuario->Usuario;
+            $loEmpresa = DB::select("SELECT *
+                                        FROM usuarioempresa ue, empresa e
+                                        WHERE ue.Empresa=e.Empresa
+                                        and ue.Usuario =$lnUsuario ");
+            $lnEmpresa= $loEmpresa[0]->Empresa;
 
 
 
@@ -688,7 +705,7 @@ class ServiciosControler extends Controller
                 'Descripcion' => $tcDescripcion,
                 'FechaVencimiento' => $tcFechaVencimiento,
                 'SalarioAproximado' => $tnSalario,
-                'Empresa' => $tnEmpresa,
+                'Empresa' => $lnEmpresa,
                 'TipoEmpleo' => $tnTipoEmpleo,
                 'FechaPublicacion' => Date("y-m-d"),
                 'Ubicacion' => $tcDireccion,
@@ -702,21 +719,27 @@ class ServiciosControler extends Controller
             ]);
 
 
-            for ($i=0; $i <  count($taHabilidades) ; $i++) {
+            $tnSerial=0;
+            if(count($taHabilidades) >0)
+            {
+                for ($i=0; $i <  count($taHabilidades) ; $i++) {
                     $tnHabilidades= $taHabilidades[$i];
+                    $tnSerial=$tnSerial+1;
                    // Insertar en la tabla candidato
                 DB::table('empleohabilidades')->insert([
-                    'Empleo' => $empleoId,
+                    'Empleos' => $empleoId,
                     'Serial' => $tnSerial,
                     'Habilidades' => $tnHabilidades,
                     'Estado' => 1
                 ]);
             }
-
-                $tnSerial=0;
+            }
+            if(count($taRequerimientos) >0 )
+            {
+                                $tnSerial=0;
                 for ($j=0; $j <count($taRequerimientos) ; $j++) {
                     $tnSerial=$tnSerial+1;
-                    $tcRequerimiento=$taRequerimientos[$i]->Descripcion;
+                    $tcRequerimiento=$taRequerimientos[$j];
                     DB::table('empleorequerimiento')->insert([
                         'Empleo' => $empleoId,
                         'Serial' => $tnSerial,
@@ -726,20 +749,27 @@ class ServiciosControler extends Controller
 
                 }
 
+
+            }
+            
+
+            if( count($taResponsabilidades) >0){
                 $tnSerial=0;
-                for ($j=0; $j <count($taResponsabilidades) ; $j++) {
+                for ($k=0; $k < count($taResponsabilidades) ; $k++) {
                     # code...
                     $tnSerial=$tnSerial+1;
-                    $tcResponsabilidades=$taResponsabilidades[$i]->Descripcion;
+                    $tcResponsabilidades=$taResponsabilidades[$k]->Descripcion;
                     DB::table('empleoresponsabilidades')->insert([
-                        'Empleo' => $empleoId,
+                        'Empleos' => $empleoId,
                         'Serial' => $tnSerial,
                         'Descripcion' => $tcResponsabilidades,
                         'Estado' => 1
                     ]);
 
                 }
-
+   
+            }
+             
 
 
 
@@ -764,7 +794,7 @@ class ServiciosControler extends Controller
             // Armar la respuesta de error
             $oPaquete = [
                 'error' => true,
-                'message' => $ex->getMessage(),
+                'message' => $ex->getMessage(). "Linea". $ex->getLine() ,
                 'values' => null,
                 "codigoerror"=>2
             ];
@@ -799,6 +829,8 @@ class ServiciosControler extends Controller
         $taHabilidades = $request->input('taHabilidades');
         $taIdiomas = $request->input('taIdiomas');
 
+
+ 
             // Validar el token
             try {
                 //code...
@@ -838,9 +870,8 @@ class ServiciosControler extends Controller
         $tcHtml = $request->input('tcHtml');
 
 
-             // Retornar la respuesta en formato JSON
-             //return response()->json($request->all());
-            
+
+
             
             // Retornar la respuesta en formato JSON
             //return response()->json(0);
