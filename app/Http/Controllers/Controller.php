@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\Utils\mPaqueteEmpleo; // Asegúrate de que la ruta sea correcta
 
+
+use Intervention\Image\Facades\Image;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
@@ -26,7 +28,7 @@ class Controller extends BaseController
             $lcListarCiudad = "SELECT C.* FROM ciudad AS C where C.Estado = 1";
             $loDatosCiudad = DB::select($lcListarCiudad);
 
-            $lcListaremple = "SELECT * FROM empleo  ";
+            $lcListaremple = "SELECT * FROM empleo where Pagado=1 ";
             $loDatosEmpleo = DB::select($lcListaremple);
 
             $loPaquete->error = 0;
@@ -255,11 +257,11 @@ class Controller extends BaseController
         try {
             // Realizar la consulta con las relaciones
             $loCandidato = DB::table('candidato as e')
-                //->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
+                ->leftJoin('usuario as c', 'e.Usuario', '=', 'c.Usuario')
                 //->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
                 //->leftJoin('tipoempleo as te', 'e.TipoEmpleo', '=', 'te.TipoEmpleo')
                 //->leftJoin('tiempoexperiencia as tec', 'e.TiempoExperiencia', '=', 'tec.TiempoExperiencia')
-            /*    ->select(
+                /*    ->select(
                     'e.Empleo', 'e.Titulo',   'e.DescripcionLarga', 'e.Descripcion', 'e.FechaVencimiento', 'e.SalarioAproximado',
                     'e.FechaPublicacion', 'e.Ubicacion', 'e.Lat', 'e.Lng',
                     'e.Categoria', 'e.TiempoExperiencia',
@@ -490,5 +492,211 @@ class Controller extends BaseController
         }
 
     }
+
+
+
+    public function updateCandidato(Request $request)
+        {
+            $id = $request->input('Candidato');
+            // return response()->json($request->all());
+            // Verificar si existe el candidato
+            $candidato = DB::table('candidato')->where('Candidato', $id)->first();
+
+            if (!$candidato) {
+                return response()->json(['error' => true, 'message' => 'Candidato no encontrado']);
+            }
+
+            // Lista de campos permitidos
+            $camposPermitidos = [
+                'Nombre', 'Profesion', 'FechaNacimiento', 'Acercade',
+                'Ciudad', 'Sexo', 'TituloTecnico', 'TituloLicenciatura',
+                'TituloDiplomado', 'TituloMaestria', 'TituloDoctorado',
+                'AnosExperiencia', 'Telefono'
+            ];
+
+            $data = [];
+
+            // Agregar solo los campos que tienen valor no vacío
+            foreach ($camposPermitidos as $campo) {
+                $valor = $request->input($campo);
+                if (!is_null($valor) && $valor !== '') {
+                    $data[$campo] = $valor;
+                }
+            }
+
+        if ($request->hasFile('foto')) {
+            $request->validate([
+                'foto' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+
+            $file = $request->file('foto');
+
+            // Generar nombre basado en fecha
+            $fecha = now()->format('Ymd_His');
+            $extension = $file->getClientOriginalExtension();
+            $nombreArchivo = "foto_{$fecha}." . $extension;
+
+            // Ruta de guardado en carpeta 'fotoperfil'
+            $carpeta = 'fotoperfil';
+            $rutaCarpeta = public_path($carpeta);
+            if (!file_exists($rutaCarpeta)) {
+                mkdir($rutaCarpeta, 0777, true);
+            }
+
+            // Procesar la imagen con Intervention Image
+            $imagen = Image::make($file)->encode('png'); // Para soportar transparencia
+
+            // Crear fondo amarillo (puedes cambiar por verde '#00FF00')
+            $fondo = Image::canvas($imagen->width(), $imagen->height(), '#FFFF00');
+            $fondo->insert($imagen, 'center');
+
+            // Guardar la imagen final
+            $fondo->save($rutaCarpeta . '/' . $nombreArchivo);
+
+            // Guardar ruta en el array de datos para base de datos
+            $data['FotoPerfil'] = $carpeta . '/' . $nombreArchivo;
+        } else {
+            $data['FotoPerfil'] = null;
+        }
+
+
+    // Si no hay datos para actualizar
+    if (empty($data)) {
+        return response()->json([
+            'error' => true,
+            'message' => 'No se enviaron campos con valores válidos para actualizar.'
+        ]);
+    }
+
+    // Actualizar solo los campos válidos
+    DB::table('candidato')->where('Candidato', $id)->update($data);
+
+    return response()->json([
+        'error' => false,
+        'message' => 'Candidato actualizado correctamente',
+        'datos_actualizados' => $data
+    ]);
+}
+
+
+
+public function updateEmpresa(Request $request)
+{
+    $id = $request->input('Empresa');
+
+    // Verificar si existe la empresa
+    $empresa = DB::table('empresa')->where('Empresa', $id)->first();
+
+    if (!$empresa) {
+        return response()->json(['error' => true, 'message' => 'Empresa no encontrada']);
+    }
+
+    // Lista de campos permitidos para la empresa
+    $camposPermitidos = [
+        'Nombre', 'NombreComercial', 'Direccion', 'Descripcion',
+        'Estado', 'TipoEmpresa', 'TamañoEmpresa', 'AñoFundacion',
+        'Telefono', 'Correo'
+    ];
+
+    $data = [];
+
+    // Agregar solo los campos que tienen valor no vacío
+    foreach ($camposPermitidos as $campo) {
+        $valor = $request->input($campo);
+        if (!is_null($valor) && $valor !== '') {
+            $data[$campo] = $valor;
+        }
+    }
+
+    // Manejar imagen de la empresa (URL Imagen)
+    if ($request->hasFile('UrlImagen')) {
+        $request->validate([
+            'UrlImagen' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $file = $request->file('UrlImagen');
+
+        // Generar nombre basado en fecha
+        $fecha = now()->format('Ymd_His');
+        $extension = $file->getClientOriginalExtension();
+        $nombreArchivo = "imagen_{$fecha}." . $extension;
+
+        // Ruta de guardado en carpeta 'imagenes_empresa'
+        $carpeta = 'imagenes_empresa';
+        $rutaCarpeta = public_path($carpeta);
+        if (!file_exists($rutaCarpeta)) {
+            mkdir($rutaCarpeta, 0777, true);
+        }
+
+        // Procesar la imagen con Intervention Image
+        $imagen = Image::make($file)->encode('png'); // Para soportar transparencia
+
+        // Crear fondo amarillo (puedes cambiar por verde '#00FF00')
+        $fondo = Image::canvas($imagen->width(), $imagen->height(), '#FFFF00');
+        $fondo->insert($imagen, 'center');
+
+        // Guardar la imagen final
+        $fondo->save($rutaCarpeta . '/' . $nombreArchivo);
+
+        // Guardar ruta en el array de datos para base de datos
+        $data['UrlImagen'] = $carpeta . '/' . $nombreArchivo;
+    } else {
+        $data['UrlImagen'] = null;
+    }
+
+    // Manejar logo de la empresa (URL Icono)
+    if ($request->hasFile('UrlIcono')) {
+        $request->validate([
+            'UrlIcono' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $file = $request->file('UrlIcono');
+
+        // Generar nombre basado en fecha
+        $fecha = now()->format('Ymd_His');
+        $extension = $file->getClientOriginalExtension();
+        $nombreArchivo = "icono_{$fecha}." . $extension;
+
+        // Ruta de guardado en carpeta 'iconos_empresa'
+        $carpeta = 'iconos_empresa';
+        $rutaCarpeta = public_path($carpeta);
+        if (!file_exists($rutaCarpeta)) {
+            mkdir($rutaCarpeta, 0777, true);
+        }
+
+        // Procesar la imagen con Intervention Image
+        $imagen = Image::make($file)->encode('png'); // Para soportar transparencia
+
+        // Crear fondo amarillo (puedes cambiar por verde '#00FF00')
+        $fondo = Image::canvas($imagen->width(), $imagen->height(), '#FFFF00');
+        $fondo->insert($imagen, 'center');
+
+        // Guardar la imagen final
+        $fondo->save($rutaCarpeta . '/' . $nombreArchivo);
+
+        // Guardar ruta en el array de datos para base de datos
+        $data['UrlIcono'] = $carpeta . '/' . $nombreArchivo;
+    } else {
+        $data['UrlIcono'] = null;
+    }
+
+    // Si no hay datos para actualizar
+    if (empty($data)) {
+        return response()->json([
+            'error' => true,
+            'message' => 'No se enviaron campos con valores válidos para actualizar.'
+        ]);
+    }
+
+    // Actualizar solo los campos válidos
+    DB::table('empresa')->where('Empresa', $id)->update($data);
+
+    return response()->json([
+        'error' => false,
+        'message' => 'Empresa actualizada correctamente',
+        'datos_actualizados' => $data
+    ]);
+}
+
 
 }

@@ -37,6 +37,18 @@ Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "li
 Route::post('servicio/listarempleosbycandidatomes', [ServiciosControler::class, "listarempleosbycandidatomes"]);
 Route::post('servicio/listarcurriculumbycandidato', [ServiciosControler::class, "listarcurriculumbycandidato"]);
 Route::post('servicio/registrarempleo', [ServiciosControler::class, "crearempleosempresa"]);
+Route::post('servicio/actualizardatoscandidato', [ServiciosControler::class, "updateCandidato"]);
+Route::post('servicio/graficasdashboard', [ServiciosControler::class, "graficasDashboard"]);
+
+Route::post('servicio/actualizardatosempresa', [ServiciosControler::class, "updateEmpresa"]);
+Route::post('servicio/mandarcodigo', [ServiciosControler::class, "enviarCodigo"]);
+Route::post('actualizar-contrasena', [ServiciosControler::class, "actualizarContrasena"]);
+
+
+
+
+
+
 
 
 
@@ -92,3 +104,5 @@ Route::middleware('jwt.auth')->post('servicio/crearcurriculumcandidato', [Servic
 
 
 Route::middleware('jwt.auth')->post('postularempleo', [ServiciosControler::class, 'aplicaratrabajo']);
+
+Route::post('/enviar-correo', [ServiciosControler::class, 'enviarmensajecontactenos']);

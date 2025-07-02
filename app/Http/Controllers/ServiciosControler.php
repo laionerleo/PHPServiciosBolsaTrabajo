@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\usuario;
 use GuzzleHttp\Client;
 use Intervention\Image\Facades\Image;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\GenericMessageMail; // El mailable que ya hicimos
 
 class ServiciosControler extends Controller
 {
@@ -573,8 +574,8 @@ class ServiciosControler extends Controller
                 'CandidatoCodigo' => uniqid(), // Generar un código único para el candidato
                 'FechaNacimiento' => null,
                 'Acercade' => null,
-                'Pais' => null,
-                'Ciudad' => null,
+                'Pais' => 1,
+                'Ciudad' => 8,
                 'Sexo' => null,
                 'TituloTecnico' => null,
                 'TituloLicenciatura' => null,
@@ -602,8 +603,8 @@ class ServiciosControler extends Controller
                     'Acercade' => null, // Opcional
                     'Telefono' => $tnTelefono,
                     'Correo' => $tcCorreo, // Correo del usuario
-                    'Pais' => null, // Opcional
-                    'Ciudad' => null, // Opcional
+                    'Pais' => 1, // Opcional
+                    'Ciudad' => 8, // Opcional
                    // 'Usuario' => $usuarioId, // Asociar la empresa al usuario creado
                 ]);
 
@@ -1117,6 +1118,9 @@ class ServiciosControler extends Controller
             ->get();
 
 
+
+
+
             return response()->json([
                 'message' => 'empleos de la empresa del mes ',
                 'error' => false,
@@ -1404,7 +1408,7 @@ class ServiciosControler extends Controller
             ->join('empleo as e', 'e.Empleo', '=', 'ce.Empleo')
             ->join('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
             ->where('ue.Usuario', $lnUsuario)
-            ->select('c.Candidato', 'c.Nombre', 'c.Profesion', 'e.Empleo')
+            ->select('c.Candidato', 'c.Nombre', 'c.Profesion', 'e.Empleo' , 'ce.FechaPostulacion')
             ->distinct()
             ->get();
         
@@ -1424,4 +1428,241 @@ class ServiciosControler extends Controller
         }
     }
 
+
+
+
+    
+    // Método para validar token y traer los datos
+    public function graficasDashboard(Request $request)
+    {
+        try {
+            // Validar el token
+            
+            try {
+                //code...
+                $loUsuario = JWTAuth::parseToken()->authenticate();
+            } catch (\Throwable $th) {
+                //throw $th;
+                return response()->json([
+                    'message' => 'No valid token found.'."ERROR". $th->getMessage(),
+                    'error' => true,
+                    "codigoerror"=>1,
+                ]);
+            } 
+            $lnUsuario =$loUsuario->Usuario;
+            
+            $postulacionesPorMes = DB::table('candidato as c')
+                                    ->join('candidatoempleo as ce', 'c.Candidato', '=', 'ce.Candidato')
+                                    ->join('empleo as e', 'e.Empleo', '=', 'ce.Empleo')
+                                    ->join('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
+                                    ->where('ue.Usuario', $lnUsuario)
+                                    ->select(
+                                        DB::raw('MONTH(ce.FechaPostulacion) as mes'),
+                                        DB::raw('COUNT(*) as cantidad')
+                                    )
+                                    ->groupBy(DB::raw('YEAR(ce.FechaPostulacion)'), DB::raw('MONTH(ce.FechaPostulacion)'))
+                                   // ->orderBy('anio')
+                                    ->orderBy('mes')
+                                    ->get();
+
+
+            $empleosPorMes = DB::table('empleo as e')
+                        ->leftJoin('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
+                        ->select(
+                         
+                            DB::raw('MONTH(e.FechaPublicacion) as mes'),
+                            DB::raw('COUNT(*) as cantidad')
+                        )
+                        ->where('ue.Usuario', '=', $lnUsuario)
+                        ->groupBy(DB::raw('YEAR(e.FechaPublicacion)'), DB::raw('MONTH(e.FechaPublicacion)'))
+                        //->orderBy('anio')
+                        ->orderBy('mes')
+                        ->get();
+
+
+                            
+                $postulacionesPorEmpleo = DB::table('candidato as c')
+                                            ->join('candidatoempleo as ce', 'c.Candidato', '=', 'ce.Candidato')
+                                            ->join('empleo as e', 'e.Empleo', '=', 'ce.Empleo')
+                                            ->join('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
+                                            ->where('ue.Usuario', $lnUsuario)
+                                            ->select(
+                                                'e.Titulo as empleo', // o puedes usar 'e.Empleo' si prefieres el ID
+                                                DB::raw('COUNT(*) as cantidad')
+                                            )
+                                            ->groupBy('e.Empleo', 'e.Titulo')
+                                            ->orderByDesc('cantidad')
+                                            ->get();
+
+                                $postulacionesPorEstado = DB::table('candidato as c')
+                                            ->join('candidatoempleo as ce', 'c.Candidato', '=', 'ce.Candidato')
+                                            ->join('empleo as e', 'e.Empleo', '=', 'ce.Empleo')
+                                            ->join('usuarioempresa as ue', 'e.Empresa', '=', 'ue.Empresa')
+                                            ->where('ue.Usuario', $lnUsuario)
+                                            ->select(
+                                                DB::raw("
+                                                    CASE ce.Estado
+                                                        WHEN 1 THEN 'Pendiente'
+                                                        WHEN 2 THEN 'Visto'
+                                                        WHEN 3 THEN 'En Espera'
+                                                        ELSE 'Desconocido'
+                                                    END as estado_nombre
+                                                "),
+                                                DB::raw('COUNT(*) as cantidad')
+                                            )
+                                            ->groupBy('ce.Estado')
+                                            ->orderBy('ce.Estado')
+                                            ->get();
+
+        
+
+            return response()->json([
+                'message' => 'candidatos o postiulanes  ',
+                'error' => false,
+                'Datos' => ["PostulantesPorMes"=>$postulacionesPorMes , "EmpleosPorMes"=>$empleosPorMes , "postulacionesPorEmpleo"=>$postulacionesPorEmpleo ,"candidatosporempleo"=>$postulacionesPorEstado  ]
+            ]);
+        } catch (\Exception $e) {
+            // Si no se puede autenticar el token, devolver error
+            return response()->json([
+                'message' => 'Error catch'. $e->getMessage(),
+                'error' => true,
+                "codigoerror"=>2,
+            ]);
+        }
+    }
+
+
+
+
+
+
+         // metodo para consultar a pago facil
+   public function enviarmensajecontactenos(Request $request)
+       {
+         $lcMensaje = "📩 Nuevo mensaje de contacto:\n\n";
+    $lcMensaje .= "👤 Nombre completo: " . $request->input('tcNombreCompleto') . "\n";
+    $lcMensaje .= "🏢 Empresa: " . $request->input('tcNombreEmpresa') . "\n";
+    $lcMensaje .= "✉️ Correo: " . $request->input('tcCorreo') . "\n";
+    $lcMensaje .= "📝 Mensaje: " . $request->input('tcMensaje') . "\n";
+    $le;
+
+        try {
+            Mail::to("salvadorsuarez@employnx.com")->send(
+                new GenericMessageMail("Nueva consulta de employnx", $lcMensaje)
+            );
+
+            Mail::to($request->input('tcCorreo'))->send(
+                new GenericMessageMail(
+                    "Hemos recibido su solicitud de información",
+                    "Estimado/a, hemos recibido correctamente su mensaje. Agradecemos su interés y en breve uno de nuestros representantes se pondrá en contacto con usted para brindarle la información solicitada. 
+
+            Atentamente, 
+            El equipo de EMPLOYNX"
+                )
+            );
+            return response()->json([
+                'status' => true,
+                'mensaje' => 'Correo enviado con éxito.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'mensaje' => 'Error al enviar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    //mandarcodigo
+
+    public function enviarCodigo(Request $request)
+{
+    $correo = $request->input('correo');
+
+    // Verificar si el correo existe en la base de datos
+    $usuario = DB::table('usuario')->where('Correo', $correo)->first();
+
+    if (!$usuario) {
+        return response()->json(['error' => true, 'message' => 'Correo no registrado']);
+    }
+
+    // Generar un código aleatorio de 6 dígitos
+    $codigo = rand(100000, 999999);
+
+    // Guardar el código en la base de datos para ese correo
+    DB::table('recuperacion_cuentas')->insert([
+        'correo' => $correo,
+        'codigo' => $codigo,
+        'created_at' => now(),
+    ]);
+
+    // Mensaje para el correo interno
+    $lcMensaje = "📩 Solicitud de recuperación de cuenta:\n\n";
+    $lcMensaje .= "✉️ Correo del usuario: " . $correo . "\n";
+    $lcMensaje .= "🔑 Código de verificación: " . $codigo . "\n";
+
+    try {
+        // Enviar correo al administrador (o a la dirección que prefieras)
+        Mail::to("salvadorsuarez@employnx.com")->send(
+            new GenericMessageMail("Nueva solicitud de recuperación de cuenta", $lcMensaje)
+        );
+
+        // Enviar correo al usuario con el código de recuperación
+        Mail::to($correo)->send(
+            new GenericMessageMail(
+                "Recuperación de Cuenta",
+                "Estimado/a, hemos recibido su solicitud para recuperar la cuenta. Utilice el siguiente código para restablecer su contraseña:\n\n🔑 Código: {$codigo}\n\nEste código es válido por 15 minutos. Si no ha solicitado la recuperación, ignore este mensaje."
+            )
+        );
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Se ha enviado un código de verificación a tu correo.'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => true,
+            'message' => 'Error al enviar el correo: ' . $e->getMessage()
+        ], 500);
+    }
 }
+
+
+
+public function actualizarContrasena(Request $request)
+{
+    $correo = $request->input('correo');
+    $codigo = $request->input('codigo');
+    $nuevaContrasena = $request->input('nuevaContrasena');
+
+    // Verificar si el código y correo son correctos
+    $registro = DB::table('recuperacion_cuentas')
+                  ->where('correo', $correo)
+                  ->where('codigo', $codigo)
+                  ->first();
+
+    if (!$registro) {
+        return response()->json(['error' => true, 'message' => 'Código de verificación incorrecto']);
+    }
+
+    // Validar la nueva contraseña
+    $request->validate([
+        'nuevaContrasena' => 'required|min:6',
+    ]);
+
+    // Actualizar la contraseña en la base de datos
+    DB::table('usuario')->where('Correo', $correo)->update([
+        'Contraseña' => bcrypt($nuevaContrasena),
+    ]);
+
+    // Eliminar el código de la base de datos (opcional)
+    DB::table('recuperacion_cuentas')->where('correo', $correo)->delete();
+
+    return response()->json(['error' => false, 'message' => 'Contraseña actualizada correctamente']);
+}
+
+
+
+}
+
