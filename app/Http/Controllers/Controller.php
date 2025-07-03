@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\Utils\mPaqueteEmpleo; // Asegúrate de que la ruta sea correcta
+use Illuminate\Support\Str;
+
 
 
 use Intervention\Image\Facades\Image;
@@ -496,7 +498,7 @@ class Controller extends BaseController
 
 
     public function updateCandidato(Request $request)
-        {
+    {
             $id = $request->input('Candidato');
             // return response()->json($request->all());
             // Verificar si existe el candidato
@@ -695,6 +697,208 @@ public function updateEmpresa(Request $request)
         'error' => false,
         'message' => 'Empresa actualizada correctamente',
         'datos_actualizados' => $data
+    ]);
+}
+
+ public function ActualizarArticulo(Request $request)
+    {
+        // Obtener el ID del artículo
+        $id = $request->input('Articulo'); // Aquí se toma el ID del artículo, si es una actualización
+
+        // Verificar si el artículo existe
+        $articulo = DB::table('articulo')->where('Articulo', $id)->first();
+
+        if (!$articulo) {
+            return response()->json(['error' => true, 'message' => 'Artículo no encontrado']);
+        }
+
+        // Lista de campos permitidos
+        $camposPermitidos = [
+            'Titulo', 'DescripcionCorta', 'DescripcionLarga',  
+            'Fecha', 'Categoria', 'Etiquetas'
+        ];
+
+        $data = [];
+
+        // Agregar solo los campos que tienen valor no vacío
+        foreach ($camposPermitidos as $campo) {
+            $valor = $request->input($campo);
+            if (!is_null($valor) && $valor !== '') {
+                // Si el campo es DescripcionLarga, lo decodificamos en Base64
+                //if ($campo == 'DescripcionLarga') {
+                  //  $data[$campo] = base64_decode($valor); // Decodificar Base64 antes de guardar
+                //} else {
+                    $data[$campo] = $valor;
+                //}
+            }
+        }
+
+        // Si se ha subido una foto
+        if ($request->hasFile('foto')) {
+            $request->validate([
+                'foto' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+
+            $file = $request->file('foto');
+
+            // Generar nombre basado en fecha
+            $fecha = now()->format('Ymd_His');
+            $extension = $file->getClientOriginalExtension();
+            $nombreArchivo = "foto_{$fecha}." . $extension;
+
+            // Ruta de guardado en carpeta 'fotoperfil'
+            $carpeta = 'fotoperfil';
+            $rutaCarpeta = public_path($carpeta);
+            if (!file_exists($rutaCarpeta)) {
+                mkdir($rutaCarpeta, 0777, true);
+            }
+
+            // Procesar la imagen con Intervention Image
+            $imagen = \Image::make($file)->encode('png'); // Para soportar transparencia
+
+            // Crear fondo amarillo (puedes cambiar por verde '#00FF00')
+            $fondo = \Image::canvas($imagen->width(), $imagen->height(), '#FFFF00');
+            $fondo->insert($imagen, 'center');
+
+            // Guardar la imagen final
+            $fondo->save($rutaCarpeta . '/' . $nombreArchivo);
+
+            // Guardar ruta en el array de datos para base de datos
+            $data['UrlImagenArticulo'] = $carpeta . '/' . $nombreArchivo;
+        } else {
+            $data['UrlImagenArticulo'] = null;
+        }
+
+        // Si no hay datos para actualizar
+        if (empty($data)) {
+            return response()->json([
+                'error' => true,
+                'message' => 'No se enviaron campos con valores válidos para actualizar.'
+            ]);
+        }
+
+        // Actualizar solo los campos válidos
+        DB::table('articulos')->where('id', $id)->update($data);
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Artículo actualizado correctamente',
+            'datos_actualizados' => $data
+        ]);
+    }
+
+
+    public function insertarArticulo(Request $request)
+{
+    // Lista de campos permitidos
+    $camposPermitidos = [
+        'Titulo', 'DescripcionCorta', 'DescripcionLarga',  
+        'Fecha', 'Categoria', 'Etiquetas'
+    ];
+
+    $data = [];
+
+    // Agregar los campos del formulario
+    foreach ($camposPermitidos as $campo) {
+        $valor = $request->input($campo);
+        if (!is_null($valor) && $valor !== '') {
+          
+                $data[$campo] = $valor;
+            
+        }
+    }
+
+    // Asignar valores por defecto a los campos que no vienen del formulario
+    $data['Autor'] = 'admin'; // Puedes cambiar esto según el usuario logueado
+    $data['Estado'] = 1;
+    $data['Slug'] = Str::slug($data['Titulo'] ?? uniqid());
+    $data['Vistas'] = 0;
+    $data['ComentariosHabilitados'] = 1;
+    $data['FechaModificacion'] = now();
+
+    // Procesar imagen si existe
+    if ($request->hasFile('foto')) {
+        $request->validate([
+            'foto' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $file = $request->file('foto');
+        $fecha = now()->format('Ymd_His');
+        $extension = $file->getClientOriginalExtension();
+        $nombreArchivo = "foto_{$fecha}." . $extension;
+
+        $carpeta = 'fotoarticulo';
+        $rutaCarpeta = public_path($carpeta);
+        if (!file_exists($rutaCarpeta)) {
+            mkdir($rutaCarpeta, 0777, true);
+        }
+
+        // Procesar la imagen
+        $imagen = \Image::make($file)->encode('png');
+        $fondo = \Image::canvas($imagen->width(), $imagen->height(), '#FFFF00');
+        $fondo->insert($imagen, 'center');
+        $fondo->save($rutaCarpeta . '/' . $nombreArchivo);
+
+        $data['UrlImagenArticulo'] = $carpeta . '/' . $nombreArchivo;
+    } else {
+        $data['UrlImagenArticulo'] = null;
+    }
+
+    // Insertar en la base de datos
+    DB::table('articulo')->insert($data);
+
+    return response()->json([
+        'error' => false,
+        'message' => 'Artículo insertado correctamente',
+        'datos_insertados' => $data
+    ]);
+}
+
+
+
+
+public function obtenerArticulosActivos()
+{
+    $articulos = DB::table('articulo')
+        ->where('Estado', 1)
+        ->orderBy('Fecha', 'desc')
+        ->get();
+
+    return response()->json([
+        'error' => false,
+        'mensaje' => 'Artículos obtenidos con éxito',
+        'articulos' => $articulos
+    ]);
+}
+
+
+public function obtenerArticuloPorSlugPost(Request $request)
+{
+    $slug = $request->input('Slug');
+
+    if (!$slug) {
+        return response()->json([
+            'error' => true,
+            'mensaje' => 'El campo Slug es requerido'
+        ]);
+    }
+
+    $articulo = DB::table('articulo')
+        ->where('Slug', $slug)
+        ->where('Estado', 1)
+        ->first();
+
+    if (!$articulo) {
+        return response()->json([
+            'error' => true,
+            'mensaje' => 'Artículo no encontrado'
+        ]);
+    }
+
+    return response()->json([
+        'error' => false,
+        'mensaje' => 'Artículo encontrado',
+        'articulo' => $articulo
     ]);
 }
 

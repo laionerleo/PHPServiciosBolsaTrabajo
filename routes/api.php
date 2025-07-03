@@ -44,6 +44,18 @@ Route::post('servicio/actualizardatosempresa', [ServiciosControler::class, "upda
 Route::post('servicio/mandarcodigo', [ServiciosControler::class, "enviarCodigo"]);
 Route::post('actualizar-contrasena', [ServiciosControler::class, "actualizarContrasena"]);
 
+Route::post('servicio/creararticulo', [Controller::class, "insertarArticulo"]);
+
+Route::get('/articulo/{slug}', [ArticuloController::class, 'obtenerArticuloPorSlug']);
+
+
+Route::get('/articulos/activos', [Controller::class, 'obtenerArticulosActivos']);
+
+Route::post('/articulo/obtener', [ArticuloController::class, 'obtenerArticuloPorSlugPost']);
+
+
+
+
 
 
 
