@@ -11,6 +11,9 @@ use GuzzleHttp\Client;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\GenericMessageMail; // El mailable que ya hicimos
+use App\Models\Utils\mPaqueteEmpleo; // Asegúrate de que la ruta sea correcta
+
+
 
 class ServiciosControler extends Controller
 {
@@ -19,63 +22,65 @@ class ServiciosControler extends Controller
        // Método para login (sin usar modelos)
 
 
-    public function login(Request $request) 
-{
-    $credentials = $request->only('email', 'password');
+    public function login(Request $request)
+    {
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
+        $credentials = $request->only('email', 'password');
 
-    try {
-        // Validar si el correo existe en la base de datos
-        $loUsuario = usuario::where('Correo', $credentials['email'])->first();
+        try {
+            // Validar si el correo existe en la base de datos
+            $loUsuario = usuario::where('Correo', $credentials['email'])->first();
+            // return $loUsuario;
 
-        if (!$loUsuario) {
-            // Devolver error si el correo no existe
+            if (!$loUsuario) {
+                // Devolver error si el correo no existe
+                return response()->json([
+                    'message' => 'Error : Correo no encontrado.',
+                    'error' => true,
+                    "codigoerror" => 3,
+                ]);
+            }
+
+            // Validar si la contraseña es correcta
+            if (!Hash::check($credentials['password'], $loUsuario->Contraseña)) {
+                // Devolver error si la contraseña no coincide
+                return response()->json([
+                    'message' => 'Error  Contraseña incorrecta.',
+                    'error' => true,
+                    "codigoerror" => 3,
+                ]);
+            }
+
+            // Generar el token JWT para el usuario
+            $token = JWTAuth::fromUser($loUsuario);
+
+            if (!$token) {
+                return response()->json([
+                    'message' => 'Error al generar el token.',
+                    'error' => true,
+                    "codigoerror" => 3,
+                ]);
+            }
+
+            // Si todo es correcto, devolver el token generado
             return response()->json([
-                'message' => 'Error : Correo no encontrado.',
+                "codigoerror"=>0,
+                'message' => 'Datos obtenidos.',
+                'error' => false,
+                'datos' => [
+                            "token"=>$token
+                            ]
+            ]);
+            ///return response()->json(compact('token'));
+
+        } catch (\Exception $th) {
+            return response()->json([
+                'message' => 'No valid token found. ERROR: ' . $th->getMessage(),
                 'error' => true,
-                "codigoerror" => 3,
+                "codigoerror" => 1,
             ]);
         }
-
-        // Validar si la contraseña es correcta
-        if (!Hash::check($credentials['password'], $loUsuario->Contraseña)) {
-            // Devolver error si la contraseña no coincide
-            return response()->json([
-                'message' => 'Error  Contraseña incorrecta.',
-                'error' => true,
-                "codigoerror" => 3,
-            ]);
-        }
-
-        // Generar el token JWT para el usuario
-        $token = JWTAuth::fromUser($loUsuario);
-
-        if (!$token) {
-            return response()->json([
-                'message' => 'Error al generar el token.',
-                'error' => true,
-                "codigoerror" => 3,
-            ]);
-        }
-
-        // Si todo es correcto, devolver el token generado
-        return response()->json([
-            "codigoerror"=>0,
-            'message' => 'Datos obtenidos.',
-            'error' => false,
-            'datos' => [
-                        "token"=>$token
-                        ]
-        ]);
-        ///return response()->json(compact('token'));
-
-    } catch (\Exception $th) {
-        return response()->json([
-            'message' => 'No valid token found. ERROR: ' . $th->getMessage(),
-            'error' => true,
-            "codigoerror" => 1,
-        ]);
     }
-}
 
 
 
@@ -229,7 +234,7 @@ class ServiciosControler extends Controller
                                     ->max('Serial');
 
                     // Insertar la nueva postulación
-                    $insercionExitosa = DB::table('candidatoempleo')->insert([ 
+                    $insercionExitosa = DB::table('candidatoempleo')->insert([
                         'Candidato' => $lnCandidato,
                         'Serial' => $ultimoSerial + 1,
                         'Empleo' => $lnEmpleo,
@@ -253,7 +258,7 @@ class ServiciosControler extends Controller
                     }
                 }
 
-        
+
         } catch (\Exception $e) {
             // Si no se puede autenticar el token, devolver error
             return response()->json([
@@ -287,7 +292,7 @@ class ServiciosControler extends Controller
             }
             $lnUsuario =$loUsuario->Usuario;
 
-            
+
             $empleos = DB::table('empleo as e')
             ->leftJoin('categoria as c', 'e.Categoria', '=', 'c.Categoria')
             ->leftJoin('empresa as emp', 'e.Empresa', '=', 'emp.Empresa')
@@ -361,7 +366,7 @@ class ServiciosControler extends Controller
                 'emp.Nombre as EmpresaNombre', 'emp.Descripcion as EmpresaDescripcion',
                 'te.Nombre as TipoEmpleoNombre', 'tec.Titulo as TiempoExperienciaTitulo',
                 'e.CodigoEmpleo',
-                'ce.FechaPostulacion', 'ce.Estado', 
+                'ce.FechaPostulacion', 'ce.Estado',
                 'ep.Descripcion as EstadoDescripcion' // Información de la postulación
 
             )
@@ -442,6 +447,7 @@ class ServiciosControler extends Controller
 
 
     public function crearcandidato(Request $request){
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
         // Recuperar los datos del request
         $tcCorreo = $request->input('tcCorreo');
         $tcContraseña = $request->input('tcContraseña');
@@ -454,11 +460,8 @@ class ServiciosControler extends Controller
         $existeUsuario = DB::table('usuario')->where('Correo', $tcCorreo)->exists();
         if ($existeUsuario) {
             // Devolver el paquete de error directamente
-            return response()->json([
-                'error' => true,
-                'message' => 'El correo electrónico ya está registrado.',
-                'values' => null
-            ]);
+            $loPaquete->message = "El correo electrónico ya está registrado.";
+            return response()->json($loPaquete);
         }
 
         try {
@@ -466,14 +469,16 @@ class ServiciosControler extends Controller
             DB::beginTransaction();
 
             // Insertar en la tabla usuario
-            $usuarioId = DB::table('usuario')->insertGetId([
+             $datosUsuario=[
                 'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
                 'Correo' => $tcCorreo,
                 'Telefono' => $tnTelefono,
                 'Contraseña' => bcrypt($tcContraseña), // Encriptar la contraseña
                 'Estado' => 1,
                 'FechaCreacion' => now(),
-            ]);
+            ];
+            $usuarioId = DB::table('usuario')->insertGetId($datosUsuario);
+            $usuariodato = usuario::where('Correo', $tcCorreo)->first();
 
             // Insertar en la tabla candidato
             DB::table('candidato')->insert([
@@ -497,16 +502,17 @@ class ServiciosControler extends Controller
             ]);
 
             // Confirmar la transacción (commit)
+            $token = JWTAuth::fromUser($usuariodato);
             DB::commit();
 
             // Armar la respuesta
-            $oPaquete = [
-                'error' => false,
-                'message' => 'Candidato creado con éxito.',
-                'values' => [
-                    'usuarioId' => $usuarioId,
-                ]
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "Candidato creada con éxito.";
+            $loPaquete->values = [
+                "token" => $token,
             ];
+            return response()->json($loPaquete);
         }
         catch (\Throwable $ex) {
             // Revertir la transacción (rollback) en caso de error
@@ -527,7 +533,9 @@ class ServiciosControler extends Controller
     }
 
 
-    public function crearcandidatoempresa(Request $request){
+    public function crearcandidatoempresa(Request $request)
+    {
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
         // Recuperar los datos del request
         $tcCorreo = $request->input('tcCorreo');
         $tcContraseña = $request->input('tcContraseña');
@@ -544,11 +552,9 @@ class ServiciosControler extends Controller
         $existeUsuario = DB::table('usuario')->where('Correo', $tcCorreo)->exists();
         if ($existeUsuario) {
             // Devolver el paquete de error directamente
-            return response()->json([
-                'error' => true,
-                'message' => 'El correo electrónico ya está registrado.',
-                'values' => null
-            ]);
+            $loPaquete->message = "El correo electrónico ya está registrado.";
+            return response()->json($loPaquete);
+
         }
 
         try {
@@ -556,6 +562,14 @@ class ServiciosControler extends Controller
             DB::beginTransaction();
 
             // Insertar en la tabla usuario
+            // datosUsuario=[
+            //     'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
+            //     'Correo' => $tcCorreo,
+            //     'Telefono' => $tnTelefono,
+            //     'Contraseña' => bcrypt($tcContraseña), // Encriptar la contraseña
+            //     'Estado' => 1,
+            //     'FechaCreacion' => now(),
+            // ];
             $usuarioId = DB::table('usuario')->insertGetId([
                 'NombreCompleto' => $tcNombre . ' ' . $tcApellidos,
                 'Correo' => $tcCorreo,
@@ -564,6 +578,9 @@ class ServiciosControler extends Controller
                 'Estado' => 1,
                 'FechaCreacion' => now(),
             ]);
+            $usuariodato = usuario::where('Correo', $tcCorreo)->first();
+
+            // return $usuariodato;
 
             // Insertar en la tabla candidato
             DB::table('candidato')->insert([
@@ -625,16 +642,26 @@ class ServiciosControler extends Controller
 
 
             // Confirmar la transacción (commit)
+            $token = JWTAuth::fromUser($usuariodato);
             DB::commit();
 
             // Armar la respuesta
-            $oPaquete = [
-                'error' => false,
-                'message' => 'Empresa creada con éxito.',
-                'values' => [
-                    'usuarioId' => $empresaId,
-                ]
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "Empresa creada con éxito.";
+            $loPaquete->values = [
+                "usuarioId" => $empresaId,
+                "token" => $token,
             ];
+            return response()->json($loPaquete);
+
+            // $oPaquete = [
+            //     'error' => false,
+            //     'message' => 'Empresa creada con éxito.',
+            //     'values' => [
+            //         'usuarioId' => $empresaId,
+            //     ]
+            // ];
         }
         catch (\Throwable $ex) {
             // Revertir la transacción (rollback) en caso de error
@@ -655,7 +682,8 @@ class ServiciosControler extends Controller
 
 
 
-    public function crearempleosempresa(Request $request){
+      public function crearempleosempresa(Request $request)
+    {
 
 
 
@@ -674,6 +702,7 @@ class ServiciosControler extends Controller
         $taIdiomas = $request->input('taIdiomas');
         $taResponsabilidades = $request->input('taResponsabilidades');
         $taRequerimientos = $request->input('taRequerimientos');
+         $tnCiudad = $request->input('tnCiudad');
 
             try {
                 //code...
@@ -716,7 +745,8 @@ class ServiciosControler extends Controller
                 'TiempoExperiencia' => $tnTiempoExperiencia,
                 'Estado' => 1,
                 'CodigoEmpleo' => uniqid(),
-                'DescripcionLarga' => $tcDescripcionLarga
+                'DescripcionLarga' => $tcDescripcionLarga,
+                  'Ubicacion' => $tnCiudad
             ]);
 
 
@@ -752,25 +782,25 @@ class ServiciosControler extends Controller
 
 
             }
-            
+
 
             if( count($taResponsabilidades) >0){
                 $tnSerial=0;
                 for ($k=0; $k < count($taResponsabilidades) ; $k++) {
                     # code...
                     $tnSerial=$tnSerial+1;
-                    $tcResponsabilidades=$taResponsabilidades[$k]->Descripcion;
+                    $tcResponsabilidades=$taResponsabilidades[$k];
                     DB::table('empleoresponsabilidades')->insert([
-                        'Empleos' => $empleoId,
+                        'Empleo' => $empleoId,
                         'Serial' => $tnSerial,
                         'Descripcion' => $tcResponsabilidades,
                         'Estado' => 1
                     ]);
 
                 }
-   
+
             }
-             
+
 
 
 
@@ -810,7 +840,11 @@ class ServiciosControler extends Controller
 
 
 
-    public function crearcurriculumcandidato(Request $request){
+
+
+
+    public function crearcurriculumcandidato(Request $request)
+    {
 
 
         // Recuperar los datos del request
@@ -831,7 +865,7 @@ class ServiciosControler extends Controller
         $taIdiomas = $request->input('taIdiomas');
 
 
- 
+
             // Validar el token
             try {
                 //code...
@@ -851,7 +885,7 @@ class ServiciosControler extends Controller
 
         try {
 
-              
+
         // Recuperar los datos del request
         $tnCandidato = $request->input('tnCandidatos');
         $tcTituloCurriculum = $request->input('tcTituloCurriculum');
@@ -873,52 +907,52 @@ class ServiciosControler extends Controller
 
 
 
-            
+
             // Retornar la respuesta en formato JSON
             //return response()->json(0);
-    
+
             if ($request->hasFile('foto')) {
                 $request->validate([
                     'foto' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                 ]);
-            
+
                 $file = $request->file('foto');
-            
+
                 // Generar nombre basado en fecha
                 $fecha = now()->format('Ymd_His');
                 $extension = $file->getClientOriginalExtension();
                 $nombreArchivo = "foto_{$fecha}." . $extension;
-            
+
                 // Ruta de guardado
                 $rutaCarpeta = public_path('curriculums');
                 if (!file_exists($rutaCarpeta)) {
                     mkdir($rutaCarpeta, 0777, true);
                 }
-            
+
                 // Procesar la imagen con Intervention
                 $imagen = Image::make($file);
-            
+
                 // Intentar quitar el fondo (esto requiere una imagen con fondo uniforme, o usar AI)
                 // Aquí simplemente haremos el fondo blanco transparente (si existe)
                 $imagen->encode('png'); // Para soportar transparencia
-            
+
                 // Crear fondo verde o amarillo
                 $fondo = Image::canvas($imagen->width(), $imagen->height(), '#FFFF00'); // Verde (o '#FFFF00' para amarillo)
-            
+
                 // Insertar la imagen original encima del fondo
                 $fondo->insert($imagen, 'center');
-            
+
                 // Guardar la imagen final
                 $fondo->save($rutaCarpeta . '/' . $nombreArchivo);
-            
+
                 // Ruta para la base de datos
                 $rutaFoto = 'curriculums/' . $nombreArchivo;
             } else {
                 $rutaFoto = null;
                // echo "No se envió la foto.";
             }
-        
-            
+
+
             // Iniciar una transacción
             DB::beginTransaction();
 
@@ -947,7 +981,7 @@ class ServiciosControler extends Controller
                     $tcNombreInstitucion = $taCertificaciones[$j]->NombreInstitucion;
                     $tcPeriodo = $taCertificaciones[$j]->Periodo;
                     $tcDescripcion = $taCertificaciones[$j]->Descripcion;
-            
+
                     DB::table('curriculumcertificacion')->insert([
                         'Curriculum' => $tnCurriculum,
                         'Serial' => $tnSerial,
@@ -959,12 +993,12 @@ class ServiciosControler extends Controller
                     ]);
                 }
             }
-            
+
             $tnSerial=0;
             if (!empty($taHabilidades) && count($taHabilidades) > 0) {
-                for ($i=0; $i <  count($taHabilidades) ; $i++) { 
+                for ($i=0; $i <  count($taHabilidades) ; $i++) {
                     $tnSerial=$tnSerial+1;
-                        $tnHabilidades= $taHabilidades[$i]; 
+                        $tnHabilidades= $taHabilidades[$i];
                     // Insertar en la tabla candidato
                     DB::table('curriculumhabilidades')->insert([
                         'Curriculum' => $tnCurriculum,
@@ -976,8 +1010,8 @@ class ServiciosControler extends Controller
             }
             $tnSerial=0;
             if (!empty($taIdiomas) && count($taIdiomas) > 0) {
-                for ($i=0; $i <  count($taIdiomas) ; $i++) { 
-                    $tcIdioma= $taIdiomas[$i]; 
+                for ($i=0; $i <  count($taIdiomas) ; $i++) {
+                    $tcIdioma= $taIdiomas[$i];
                     $tnSerial=$tnSerial+1;
                     // Insertar en la tabla candidato
                     DB::table('curriculumidioma')->insert([
@@ -1002,7 +1036,7 @@ class ServiciosControler extends Controller
                     $tcNombreInstitucion=$taExperiencias[$j]->NombreInstitucion;
                     $tcPeriodo=$taExperiencias[$j]->Periodo;
                     $tcDescripcion=$taExperiencias[$j]->Descripcion;
-    
+
                     DB::table('curriculumexperiencialaboral')->insert([
                         'Curriculum' => $tnCurriculum,
                         'Serial' => $tnSerial,
@@ -1028,7 +1062,7 @@ class ServiciosControler extends Controller
                     $tcNombreInstitucion=$taFormaciones[$k]->NombreInstitucion;
                     $tcPeriodo=$taFormaciones[$k]->Periodo;
                     $tcDescripcion=$taFormaciones[$k]->Descripcion;
-    
+
                     DB::table('curriculumformacion')->insert([
                         'Curriculum' => $tnCurriculum,
                         'Serial' => $tnSerial,
@@ -1137,7 +1171,7 @@ class ServiciosControler extends Controller
     }
 
 
-    
+
     public function listarcurriculumbycandidato(Request $request)
     {
         try {
@@ -1158,20 +1192,20 @@ class ServiciosControler extends Controller
             $loCandidato = DB::table('candidato')
                             ->where('Usuario', '=', $lnUsuario)
                             ->first();
-            $lnCandidato=$loCandidato->Candidato;   
+            $lnCandidato=$loCandidato->Candidato;
 
-            
-           
-        
-            $empleos = DB::table('curriculum as cu')            
+
+
+
+            $empleos = DB::table('curriculum as cu')
             ->leftJoin('candidato as cand', 'cu.Candidato', '=', 'cand.Candidato') // Unir con candidato
-            
+
             ->select(
-                'cu.Curriculum', 'cu.Titulo', 'cu.FechaCreacion', 'cu.Pagado', 
+                'cu.Curriculum', 'cu.Titulo', 'cu.FechaCreacion', 'cu.Pagado',
             )
             ->where('cu.Candidato', '=', $lnCandidato) // Filtrar por el Usuario asociado al candidato
             ->get();
-        
+
 
             return response()->json([
                 'message' => 'lista de curriculun canditado ',
@@ -1191,11 +1225,11 @@ class ServiciosControler extends Controller
 
 
 
-     
+
     public function generarpago(Request $request)
     {
-       
-            
+
+
               // Recuperar los datos del request
             $tcCorreo = $request->input('tcCorreo');
             $tnTelefono = $request->input('tnTelefono');
@@ -1209,11 +1243,11 @@ class ServiciosControler extends Controller
             }else{
                 $tcNumeroPago="EM-".$Empleo;
             }
-            
 
-            
-           
-        
+
+
+
+
             $lcComerceID = "4be84111a613654b362415e563cb7607df7b203b5d303802a8a546061bbc7847";
             $lcUrlCallBack = "http://serviciostigomoney.pagofacil.com.bo/api/servicio/callbacktest";
 
@@ -1240,7 +1274,7 @@ class ServiciosControler extends Controller
             ];
 
             try {
-                
+
                 $loClientTransaccion=new Client();
                 $laHeaderTransaccion = ['Accept' => 'application/json'];
                         $loResponseTransaccion = $loClientTransaccion->post($lcUrlTransaccion, [
@@ -1259,13 +1293,13 @@ class ServiciosControler extends Controller
                                 ], 400);
                             }
                         $laObjetoQr = explode(";", $lcResultTransaccion->values);
-            
+
                         $lnTransaccionDePago=$laObjetoQr[0];
                         $lcQRBASE64=json_decode($laObjetoQr[1]);
 
 
 
-                
+
 
                     return response()->json([
                         'message' => 'lista de curriculun canditado ',
@@ -1283,26 +1317,26 @@ class ServiciosControler extends Controller
                         "codigoerror"=>2,
                     ]);
                 }
-        
-        
+
+
     }
 
 
         // metodo para consultar a pago facil
    public function consultarEstado(Request $request)
    {
-       
+
 
        try {
 
-       
+
            $lnNumeroTransaccion = $request->tnTransaccionDePago; // Asegúrate de tener el nombre correcto del parámetro
            $tnCurriculum = $request->tnCurriculum; // Asegúrate de tener el nombre correcto del parámetro
            $tnEmpleo = $request->tnEmpleo; // Asegúrate de tener el nombre correcto del parámetro
-           
 
 
-      
+
+
 
            // return response()->json($request->all());
            // Cliente HTTP para hacer la solicitud
@@ -1318,10 +1352,10 @@ class ServiciosControler extends Controller
            )]);
 
            $responseData = json_decode($response->getBody()->getContents());
-       
 
-         
-                     
+
+
+
                // Verificar si values no está vacío y contiene los campos necesarios
               if (!empty($responseData->values) && isset($responseData->values->MetodoPago) && isset($responseData->values->EstadoTransaccion))
                {
@@ -1330,7 +1364,7 @@ class ServiciosControler extends Controller
 
                    // Actualizar estado de la transacción si el estado es 2
                    if (  $estadoTransaccion == 2) {
-                     
+
                     if(!is_null($tnCurriculum))
                     {
                         $affectedRows = DB::table('curriculum')
@@ -1346,25 +1380,25 @@ class ServiciosControler extends Controller
                         ]);
                     }
                         // Actualizar en la tabla curriculum donde el Candidato coincide
-                       
+
 
                    }
 
                    // Actualizar estado de la transacción si el estado es 4
                    if ($estadoTransaccion == 4) {
-                           
+
                    }
 
                    // Manejar retiro pago si el método de pago es 30 y el estado de la transacción es 2
 
                } else {
                    // Guardar log si values está vacío o faltan campos
-                 
+
                }
                    // $loPaquete->values = ["tnTransaccionRetiroPago"=>$tnIdRetiro, "toConsultarTransaccionPago"=>$responseData->values ];
            return response()->json($responseData);
 
-   
+
 
        } catch (\Exception $e) {
            // Captura cualquier excepción y devuelve un error
@@ -1382,14 +1416,14 @@ class ServiciosControler extends Controller
    }
 
 
-   
+
 
     // Método para validar token y traer los datos
     public function listarpostulantesbyempresa(Request $request)
     {
         try {
             // Validar el token
-            
+
             try {
                 //code...
                 $loUsuario = JWTAuth::parseToken()->authenticate();
@@ -1400,9 +1434,9 @@ class ServiciosControler extends Controller
                     'error' => true,
                     "codigoerror"=>1,
                 ]);
-            } 
+            }
             $lnUsuario =$loUsuario->Usuario;
-            
+
             $candidatos = DB::table('candidato as c')
             ->join('candidatoempleo as ce', 'c.Candidato', '=', 'ce.Candidato')
             ->join('empleo as e', 'e.Empleo', '=', 'ce.Empleo')
@@ -1411,7 +1445,7 @@ class ServiciosControler extends Controller
             ->select('c.Candidato', 'c.Nombre', 'c.Profesion', 'e.Empleo' , 'ce.FechaPostulacion')
             ->distinct()
             ->get();
-        
+
 
             return response()->json([
                 'message' => 'candidatos o postiulanes  ',
@@ -1543,6 +1577,7 @@ class ServiciosControler extends Controller
     $lcMensaje .= "👤 Nombre completo: " . $request->input('tcNombreCompleto') . "\n";
     $lcMensaje .= "🏢 Empresa: " . $request->input('tcNombreEmpresa') . "\n";
     $lcMensaje .= "✉️ Correo: " . $request->input('tcCorreo') . "\n";
+    $lcMensaje .= "✉️ Telefono: " . $request->input('tcTelefono') . "\n";
     $lcMensaje .= "📝 Mensaje: " . $request->input('tcMensaje') . "\n";
     $le;
 

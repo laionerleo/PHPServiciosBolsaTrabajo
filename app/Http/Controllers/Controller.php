@@ -33,6 +33,36 @@ class Controller extends BaseController
             $lcListaremple = "SELECT * FROM empleo where Pagado=1 ";
             $loDatosEmpleo = DB::select($lcListaremple);
 
+            $lcListaremplesDestacados = "SELECT
+                                    e.Empleo,
+                                    e.Titulo,
+                                    e.Descripcion,
+                                    e.FechaVencimiento,
+                                    e.SalarioAproximado,
+                                    e.FechaPublicacion,
+                                    e.Ubicacion,
+                                    ci.Nombre AS NombreCiudad,
+                                    e.Lat,
+                                    e.Lng,
+                                    e.Categoria,
+                                    e.TiempoExperiencia,
+                                    c.Nombre AS CategoriaNombre,
+                                    e.Empresa,
+                                    emp.EmpresaCodigo,
+                                    emp.Nombre AS EmpresaNombre,
+                                    emp.Descripcion AS EmpresaDescripcion,
+                                    te.Nombre AS TipoEmpleoNombre,
+                                    tec.Titulo AS TiempoExperienciaTitulo,
+                                    e.CodigoEmpleo
+                                FROM empleo AS e
+                                LEFT JOIN categoria AS c ON e.Categoria = c.Categoria
+                                LEFT JOIN empresa AS emp ON e.Empresa = emp.Empresa
+                                LEFT JOIN tipoempleo AS te ON e.TipoEmpleo = te.TipoEmpleo
+                                LEFT JOIN ciudad AS ci ON e.Ubicacion= ci.Ciudad
+                                LEFT JOIN tiempoexperiencia AS tec ON e.TiempoExperiencia = tec.TiempoExperiencia
+                                WHERE e.Estado = 1 AND e.Pagado=1";
+            $loDatosEmpleoDestacados = DB::select($lcListaremplesDestacados);
+
             $loPaquete->error = 0;
             $loPaquete->status = 1;
             $loPaquete->message = "Datos Obtenidos.";
@@ -40,6 +70,7 @@ class Controller extends BaseController
                 "DatosDePais" => $loDatosPais,
                 "DatosDeCiudad" => $loDatosCiudad,
                 "DatosDeEmpleo" => $loDatosEmpleo,
+                "DatosDeEmpleoDestacados" => $loDatosEmpleoDestacados,
             ];
             return response()->json($loPaquete);
         } catch (\Throwable $th) {
@@ -371,13 +402,13 @@ class Controller extends BaseController
                     'e.Titulo as EmpleoTitulo',
                     'e.TiempoExperiencia as ExperienciaRequerida',
                     'c.AnosExperiencia as ExperienciaCandidato',
-                    DB::raw("CASE 
+                    DB::raw("CASE
                         WHEN c.AnosExperiencia >= e.TiempoExperiencia THEN 'Cumple'
                         ELSE 'No cumple'
                     END as ComparacionExperiencia"),
                     DB::raw("COUNT(DISTINCT eh.Habilidades) as HabilidadesRequeridas"),
                     DB::raw("COUNT(DISTINCT ch.Habilidades) as HabilidadesCandidato"),
-                    DB::raw("CASE            
+                    DB::raw("CASE
                         WHEN COUNT(DISTINCT ch.Habilidades) >= COUNT(DISTINCT eh.Habilidades) THEN 'Cumple'
                         ELSE 'No cumple'
                     END as ComparacionHabilidades")
@@ -392,7 +423,7 @@ class Controller extends BaseController
                     'cur.html'
                 )
                 ->get();
-            
+
 
             // Armar la respuesta
             $oPaquete = [
