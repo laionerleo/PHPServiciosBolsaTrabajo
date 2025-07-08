@@ -37,6 +37,8 @@ Route::post('servicio/listarempleosbycandidato', [ServiciosControler::class, "li
 Route::post('servicio/listarempleosbycandidatomes', [ServiciosControler::class, "listarempleosbycandidatomes"]);
 Route::post('servicio/listarcurriculumbycandidato', [ServiciosControler::class, "listarcurriculumbycandidato"]);
 Route::post('servicio/registrarempleo', [ServiciosControler::class, "crearempleosempresa"]);
+Route::post('servicio/listararticulo', [ServiciosControler::class, "getDetalleArticulos"]);
+Route::post('servicio/getarticulo', [ServiciosControler::class, "getDetalleArticulo"]);
 
 
 

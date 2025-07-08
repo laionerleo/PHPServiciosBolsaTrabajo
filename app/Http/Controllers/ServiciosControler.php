@@ -1452,4 +1452,83 @@ class ServiciosControler extends Controller
         }
     }
 
+    public function getDetalleArticulos(Request $request)
+    {
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
+        try {
+            // Realizar la consulta con las relaciones
+            $loarticulos = DB::table('articulo as a')
+                            ->select('a.*')
+                            ->where('a.Estado', '=', 1)
+                            ->get(); // Ejecutamos la consulta para obtener los artículos
+            // Armar la respuesta
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "lista de articulos.";
+            $loPaquete->values = $loarticulos;
+
+        }
+        catch (\Throwable $ex) {
+            // Manejo de excepciones
+            // $oPaquete = [
+            //     'error' => false,
+            //     'message' => $ex->getMessage(),
+            //     'values' => null
+            // ];
+            $loPaquete->error = 1;
+            $loPaquete->status = 0;
+            $loPaquete->message = $ex->getMessage();
+            $loPaquete->values = [];
+        }
+
+        // Retornar la respuesta en formato JSON
+        return response()->json($loPaquete);
+    }
+
+    public function getDetalleArticulo(Request $request)
+    {
+        $loPaquete = new mPaqueteEmpleo(1, 0, "Error ...", null);
+        $tcCodigoArticulo = $request->input('tcCodigoArticulo');
+        try {
+            // Realizar la consulta con las relaciones
+            $loArticulo = DB::table('articulo as a')
+                            ->select(
+                                'a.*',
+                            )
+                            ->where('a.Articulo', '=', $tcCodigoArticulo)
+                            ->first(); // Usamos 'first' porque estamos esperando un solo resultado
+
+
+
+                // traer requerimiento
+
+
+            $laDatosArticulo=[
+                "loArticulo"=> @$loArticulo,
+               // "laEmpleoRequerimiento"=>$empleosrequerimiento ,
+                //"laEmpleoResponsabilidades"=> $empleoresponsabilidades,
+            ] ;
+            // Armar la respuesta
+            $loPaquete->error = 0;
+            $loPaquete->status = 1;
+            $loPaquete->message = "Articulo  obtenidos con éxito.";
+            $loPaquete->values = $laDatosArticulo;
+
+        }
+        catch (\Throwable $ex) {
+            // Manejo de excepciones
+            // $oPaquete = [
+            //     'error' => false,
+            //     'message' => $ex->getMessage(),
+            //     'values' => null
+            // ];
+            $loPaquete->error = 1;
+            $loPaquete->status = 0;
+            $loPaquete->message = $ex->getMessage();
+            $loPaquete->values = [];
+        }
+
+        // Retornar la respuesta en formato JSON
+        return response()->json($loPaquete);
+    }
 }
